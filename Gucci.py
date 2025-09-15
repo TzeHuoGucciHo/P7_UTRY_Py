@@ -63,9 +63,26 @@ def plot_histogram(df, numeric_cols):
 
 plot_histogram(df_cm, numeric_cols)
 
-# Observed outliers in:
-# Belly, outlier, 550+ cm
-# Waist, outlier, 250+ cm
-# ArmLength, outlier, 170+ cm
+    # Observed outliers in:
+    # Belly, outlier, 550+ cm
+    # Waist, outlier, 250+ cm
+    # ArmLength, outlier, 170+ cm
 
 # Function to plot boxplots for numerical columns
+def plot_boxplots(df, numeric_cols):
+    n_cols = 1  # Stack boxplots vertically
+    n_rows = len(numeric_cols)
+    plt.figure(figsize=(10, 4 * n_rows))  # Taller figure for more features
+
+    for i, col in enumerate(numeric_cols, 1):
+        plt.subplot(n_rows, n_cols, i)
+        sns.boxplot(x=df[col], color='lightgreen', orient='h')
+        plt.title(f'Boxplot of {col}')
+        plt.xlabel(f'{col} (cm)')
+
+    plt.tight_layout()
+    plt.show()
+
+    # Outlier detection is performed within age groups
+    # Each measurement is assessed relative to typical values for that age, not across all ages.
+
