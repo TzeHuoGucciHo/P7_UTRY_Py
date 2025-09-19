@@ -1,0 +1,14 @@
+# Basale datavidenskabspakker
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+jupyter
+
+# Gradient boosting modeller
+lightgbm
+xgboost
+
+# Håndtering af ubalancerede klasser
+imbalanced-learn
