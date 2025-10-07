@@ -1,0 +1,34 @@
+@'
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "body-measure"
+version = "0.1.0"
+description = "Two-view body measurement pipeline with DeepLabV3 segmentation and robust scale fusion (ArUco + height)"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "Your Team" }]
+license = { text = "Proprietary" }
+
+dependencies = [
+  "numpy>=1.26",
+  "opencv-contrib-python>=4.9"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0"
+]
+
+[project.scripts]
+body-measure = "body_measure.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["src"]
+'@ | Set-Content -Encoding UTF8 .\pyproject.toml
