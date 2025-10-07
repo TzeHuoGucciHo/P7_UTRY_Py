@@ -234,6 +234,8 @@ def mahalanobis_chi_outliers(df, numeric_cols, alpha=0.01, remove=False):
     Detects multivariate outliers using Mahalanobis distance and Chi-squared distribution.
     Flag and remove points with squared Mahalanobis distance from the mean that is so extreme,
     that the probability of observing such a point under the assumption of multivariate normality is less than alpha.
+    We could use RobustScaler to reduce the influence of extreme values when computing Mahalanobis distances,
+    making outlier detection less sensitive to a few unusually large or small measurements.
     """
     X = df[numeric_cols].values
     cov_matrix = np.cov(X, rowvar=False)
