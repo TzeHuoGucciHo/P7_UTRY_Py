@@ -135,6 +135,23 @@ def plot_plots(df, numeric_cols, length_cols, suffix=""):
     plot_boxplots(df, numeric_cols, length_cols, suffix)
     plot_qq_plots(df, numeric_cols)
 
+def plot_skewness_comparison(before_skew, after_skew):
+    """
+    Plots a horizontal bar chart comparing skewness before and after transformation.
+    """
+    skew_df = pd.DataFrame({
+        'Before': before_skew,
+        'After': after_skew
+    })
+
+    skew_df.plot(kind='barh', figsize=(10, 6), color=['salmon', 'skyblue'])
+    plt.title('Feature Skewness Before vs After Transformation')
+    plt.xlabel('Skewness')
+    plt.axvline(0, color='gray', linestyle='--', linewidth=1)
+    plt.legend(loc='lower right')
+    plt.tight_layout()
+    plt.show()
+
 # ---------------------------
 # Data Analysis
 # ---------------------------
@@ -191,7 +208,7 @@ def transform_and_scale(train_df, val_df, test_df, numeric_cols):
     Note that PowerTransformer applies non-linear transformation, altering relationships between features.
     This will affect the correlation matrix.
     """
-    transformer = PowerTransformer(method='yeo-johnson', standardize=True)  # no scaling, just transform
+    transformer = PowerTransformer(method='yeo-johnson', standardize=True)  # standardize=True applies StandardScaler after transformation
 
     # Fit on train, apply to all
     train_transformed = transformer.fit_transform(train_df[numeric_cols])
@@ -245,6 +262,7 @@ def mahalanobis_chi_outliers(df, numeric_cols, alpha=0.01, remove=False):
 # Main Workflow
 # ---------------------------
 def main():
+    correlation_threshold = 0.9  # The threshold is 80% for considering features as highly correlated
     filepath = r"C:\Users\Tze Huo Gucci Ho\Desktop\Git Projects\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
 
@@ -287,27 +305,36 @@ def main():
     # Data overview
     plot_plots(train_df, num_cols_no_gender, length_cols)
     shapiro_wilk_test(train_df, num_cols_no_gender)
-    correlation_analysis(train_df, num_cols_no_gender, threshold=0.9)
+    correlation_analysis(train_df, num_cols_no_gender, correlation_threshold)
 
+    print("Before transformation:\n", train_df[num_cols_no_gender].skew().sort_values(ascending=False))
     train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
+    print("\nAfter transformation:\n", train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False))
+    # Skewness was measured before and after transformation.
+    # Features like Belly, HeadCircumference, and ShoulderWidth were highly right-skewed (>5),
+    # but Yeo-Johnson transformation reduced these to near-symmetric distributions (~0),
+    # improving normality assumptions for later modeling.
+
+    # before_skew = train_df[num_cols_no_gender].skew().sort_values(ascending=False)
+    # train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
+    # after_skew = train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False)
+    # plot_skewness_comparison(before_skew, after_skew)
 
     # Data overview
     plot_plots(train_df_trans, num_cols_no_gender, length_cols)
     shapiro_wilk_test(train_df_trans, num_cols_no_gender)
-    """
-    Although the Shapiro–Wilk test rejects strict normality for several features, 
-    visual inspection of histograms and Q-Q plots indicates that most features are approximately normally distributed. 
-    Minor skewness and tail deviations remain but are acceptable for multivariate analysis assumptions.
-    """
+    # Although the Shapiro–Wilk test rejects strict normality for several features,
+    # visual inspection of histograms and Q-Q plots indicates that most features are approximately normally distributed.
+    # Minor skewness and tail deviations remain but are acceptable for multivariate analysis assumptions.
 
-    correlation_analysis(train_df_trans, num_cols_no_gender, threshold=0.9)
+    correlation_analysis(train_df_trans, num_cols_no_gender, correlation_threshold)
 
     train_df_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.001, remove=True)
 
     # Data overview after outlier removal
-    plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)
+    plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)   # Some features show multimodal distributions after outlier removal, likely due population subgroups (e.g., Gender, Age)
     shapiro_wilk_test(train_df_cleaned, num_cols_no_gender)
-    correlation_analysis(train_df_cleaned, num_cols_no_gender, threshold=0.9)
+    correlation_analysis(train_df_cleaned, num_cols_no_gender, correlation_threshold)
 
 if __name__ == "__main__":
     main()
