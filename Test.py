@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 from pandas.api.types import is_numeric_dtype, is_categorical_dtype
 from scipy.stats import chi2
+from sklearn.impute import SimpleImputer
+
 
 # ML task is multivariate imputation
 # ChatGPT and Copilot assisted in formatting, structuring, and writing this code.
@@ -36,20 +38,6 @@ def data_overview(df):
     print("\nColumns\n", df.columns)
     print("\nMissing values:\n", df.isnull().sum())
     print("\nDuplicates:", df.duplicated().sum())
-
-def impute_missing_values(df):
-    """
-    Imputes missing values in the dataframe:
-        Mean for numerical columns.
-        Mode for categorical columns.
-    """
-    for col in df.columns:
-        if df[col].isnull().sum() > 0:
-            if df[col].dtype == 'object':
-                df[col] = df[col].fillna(df[col].mode()[0])
-            else:
-                df[col] = df[col].fillna(df[col].mean())
-    return df
 
 def convert_inches_to_cm(df, length_cols):
     """
@@ -224,7 +212,12 @@ def transform_and_scale(train_df, val_df, test_df, numeric_cols):
 # ---------------------------
 # Outlier Handling
 # ---------------------------
-def mahalanobis_chi_outliers(df, numeric_cols, alpha=0.01, remove=True):
+def mahalanobis_chi_outliers(df, numeric_cols, alpha=0.01, remove=False):
+    """
+    Detects multivariate outliers using Mahalanobis distance and Chi-squared distribution.
+    Flag and remove points with squared Mahalanobis distance from the mean that is so extreme,
+    that the probability of observing such a point under the assumption of multivariate normality is less than alpha.
+    """
     X = df[numeric_cols].values
     cov_matrix = np.cov(X, rowvar=False)
     cov_inv = np.linalg.inv(cov_matrix)
@@ -255,40 +248,66 @@ def main():
     filepath = r"C:\Users\Tze Huo Gucci Ho\Desktop\Git Projects\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
 
+    # Data overview
+    data_overview(df)
+
     # Split dataset into train(70%)/val(15%)/test(15%) (by rows, i.e. people)
     train_df, val_df, test_df = split_dataset(df, test_size=0.15, val_size=0.176)
 
-    # data_overview(train_df)
-    train_df = impute_missing_values(train_df)
+    # Impute missing values, fit only on train to avoid data leakage then apply to val and test
+    num_cols = train_df.select_dtypes(include=[np.number]).columns
+    num_imputer = SimpleImputer(strategy='mean')
+    train_df[num_cols] = num_imputer.fit_transform(train_df[num_cols])
+    val_df[num_cols] = num_imputer.transform(val_df[num_cols])
+    test_df[num_cols] = num_imputer.transform(test_df[num_cols])
+
+    cat_cols = train_df.select_dtypes(exclude=[np.number]).columns
+    if len(cat_cols) > 0:   # Error occured earlier. Failsafe to only impute categorical columns if they exist
+        cat_imputer = SimpleImputer(strategy='most_frequent')
+        train_df[cat_cols] = cat_imputer.fit_transform(train_df[cat_cols])
+        val_df[cat_cols] = cat_imputer.transform(val_df[cat_cols])
+        test_df[cat_cols] = cat_imputer.transform(test_df[cat_cols])
+
+    # Data overview
     train_df = train_df.drop_duplicates()
     data_overview(train_df)
 
     # Ordinal/label encoding, maps 1 to 0 and 2 to 1. Replaces the existing gender column with the new binary values.
-    train_df['Gender'] = train_df['Gender'].map({1: 0, 2: 1})
+    mapping = {1: 0, 2: 1}
+    train_df['Gender'] = train_df['Gender'].map(mapping)
+    val_df['Gender'] = val_df['Gender'].map(mapping)
+    test_df['Gender'] = test_df['Gender'].map(mapping)
 
     numeric_cols = train_df.select_dtypes(include=np.number).columns.tolist()   # Columns for numerical features, incl. Age and gender encoded
+    num_cols_no_gender = [col for col in numeric_cols if col not in ['Gender']]  # Exclude Gender column from transformation and scaling
     length_cols = [col for col in numeric_cols if col not in ['Age', 'Gender']] # Columns for specifically body measurements
 
-    train_df_cm = convert_inches_to_cm(train_df, length_cols)   # Converts inches to cm for body measurements
+    # train_df_cm = convert_inches_to_cm(train_df, length_cols)   # Converts inches to cm for body measurements
 
     # Data overview
-    plot_plots(train_df_cm, numeric_cols, length_cols, "cm")    # "cm" suffix for length columns before transformation and scaling
-    shapiro_wilk_test(train_df_cm, numeric_cols)
-    correlation_analysis(train_df_cm, numeric_cols, threshold=0.9)
+    plot_plots(train_df, num_cols_no_gender, length_cols)
+    shapiro_wilk_test(train_df, num_cols_no_gender)
+    correlation_analysis(train_df, num_cols_no_gender, threshold=0.9)
 
-    train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, numeric_cols)
+    train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
 
     # Data overview
-    plot_plots(train_df_trans, numeric_cols, length_cols)
-    shapiro_wilk_test(train_df_trans, numeric_cols)
-    correlation_analysis(train_df_trans, numeric_cols, threshold=0.9)
+    plot_plots(train_df_trans, num_cols_no_gender, length_cols)
+    shapiro_wilk_test(train_df_trans, num_cols_no_gender)
+    """
+    Although the Shapiro–Wilk test rejects strict normality for several features, 
+    visual inspection of histograms and Q-Q plots indicates that most features are approximately normally distributed. 
+    Minor skewness and tail deviations remain but are acceptable for multivariate analysis assumptions.
+    """
 
-    #train_df_cm_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.01, remove=True)
+    correlation_analysis(train_df_trans, num_cols_no_gender, threshold=0.9)
+
+    train_df_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.001, remove=True)
 
     # Data overview after outlier removal
-    #plot_plots(train_df_cm_cleaned, numeric_cols, length_cols)
-    #shapiro_wilk_test(train_df_cm_cleaned, numeric_cols)
-    #correlation_analysis(train_df_cm_cleaned, numeric_cols, threshold=0.9)
+    plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)
+    shapiro_wilk_test(train_df_cleaned, num_cols_no_gender)
+    correlation_analysis(train_df_cleaned, num_cols_no_gender, threshold=0.9)
 
 if __name__ == "__main__":
     main()
