@@ -11,8 +11,11 @@ from scipy.stats import chi2
 from sklearn.impute import SimpleImputer
 
 
+
 # ML task is multivariate imputation
 # ChatGPT and Copilot assisted in formatting, structuring, and writing this code.
+
+
 
 # ---------------------------
 # Data Overview and Cleaning
@@ -258,18 +261,51 @@ def mahalanobis_chi_outliers(df, numeric_cols, alpha=0.01, remove=False):
         print(f"Flagged {np.sum(outlier_mask)} outliers (chi2 method)")
         return df_flagged
 
+# ---------------------------
+# Data Preparation (Simulate Missing Data)
+# ---------------------------
+def simulate_missing_data(df, missing_rate=0.2, random_state=42):
+    """
+    Randomly masks a percentage of data as missing (NaN) to simulate real cases.
+    Returns a dataframe with masked values and a mask indicating which values were masked.
+    """
+    np.random.seed(random_state)
+    df_masked = df.copy()
+    mask = pd.DataFrame(False, index=df.index, columns=df.columns)
+
+    # Select only numeric columns to mask
+    numeric_cols = [col for col in df.select_dtypes(include=[np.number]).columns if col not in ['Gender']]
+    total_cells = len(df) * len(numeric_cols)
+    total_to_mask = int(total_cells * missing_rate)
+
+    # Select a random sample (row, col) positions to mask
+    row_indices = np.random.choice(df.index, size=total_to_mask, replace=True)
+    col_indices = np.random.choice(numeric_cols, size=total_to_mask, replace=True)
+
+    # For each selected position, set to NaN and update mask
+    for row, col in zip(row_indices, col_indices):
+        df_masked.at[row, col] = np.nan
+        mask.at[row, col] = True
+
+    print(f"Percentage of missing values simulated: {missing_rate * 100:.0f}% (excluding Gender column)")
+
+    return df_masked, mask
+
+
 
 
 # ---------------------------
 # Main Workflow
 # ---------------------------
 def main():
-    correlation_threshold = 0.9  # The threshold is 80% for considering features as highly correlated
+    correlation_threshold = 0.9  # The threshold is 90% for considering features as highly correlated
     filepath = r"C:\Users\Tze Huo Gucci Ho\Desktop\Git Projects\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
 
     # Data overview
-    data_overview(df)
+    #data_overview(df)
+
+    df = df.drop_duplicates()
 
     # Split dataset into train(70%)/val(15%)/test(15%) (by rows, i.e. people)
     train_df, val_df, test_df = split_dataset(df, test_size=0.15, val_size=0.176)
@@ -289,8 +325,7 @@ def main():
         test_df[cat_cols] = cat_imputer.transform(test_df[cat_cols])
 
     # Data overview
-    train_df = train_df.drop_duplicates()
-    data_overview(train_df)
+    #data_overview(train_df)
 
     # Ordinal/label encoding, maps 1 to 0 and 2 to 1. Replaces the existing gender column with the new binary values.
     mapping = {1: 0, 2: 1}
@@ -302,41 +337,51 @@ def main():
     num_cols_no_gender = [col for col in numeric_cols if col not in ['Gender']]  # Exclude Gender column from transformation and scaling
     length_cols = [col for col in numeric_cols if col not in ['Age', 'Gender']] # Columns for specifically body measurements
 
-    # train_df_cm = convert_inches_to_cm(train_df, length_cols)   # Converts inches to cm for body measurements
+    #train_df_cm = convert_inches_to_cm(train_df, length_cols)   # Converts inches to cm for body measurements
 
     # Data overview
-    plot_plots(train_df, num_cols_no_gender, length_cols)
-    shapiro_wilk_test(train_df, num_cols_no_gender)
-    correlation_analysis(train_df, num_cols_no_gender, correlation_threshold)
+    #plot_plots(train_df, num_cols_no_gender, length_cols)
+    #shapiro_wilk_test(train_df, num_cols_no_gender)
+    #correlation_analysis(train_df, num_cols_no_gender, correlation_threshold)
 
-    print("Before transformation:\n", train_df[num_cols_no_gender].skew().sort_values(ascending=False))
+    #print("Before transformation:\n", train_df[num_cols_no_gender].skew().sort_values(ascending=False))
     train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
-    print("\nAfter transformation:\n", train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False))
+    #print("\nAfter transformation:\n", train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False))
     # Skewness was measured before and after transformation.
     # Features like Belly, HeadCircumference, and ShoulderWidth were highly right-skewed (>5),
     # but Yeo-Johnson transformation reduced these to near-symmetric distributions (~0),
     # improving normality assumptions for later modeling.
 
-    # before_skew = train_df[num_cols_no_gender].skew().sort_values(ascending=False)
-    # train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
-    # after_skew = train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False)
-    # plot_skewness_comparison(before_skew, after_skew)
+    #before_skew = train_df[num_cols_no_gender].skew().sort_values(ascending=False)
+    #train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
+    #after_skew = train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False)
+    #plot_skewness_comparison(before_skew, after_skew)
 
     # Data overview
-    plot_plots(train_df_trans, num_cols_no_gender, length_cols)
-    shapiro_wilk_test(train_df_trans, num_cols_no_gender)
+    #plot_plots(train_df_trans, num_cols_no_gender, length_cols)
+    #shapiro_wilk_test(train_df_trans, num_cols_no_gender)
     # Although the Shapiro–Wilk test rejects strict normality for several features,
     # visual inspection of histograms and Q-Q plots indicates that most features are approximately normally distributed.
     # Minor skewness and tail deviations remain but are acceptable for multivariate analysis assumptions.
 
-    correlation_analysis(train_df_trans, num_cols_no_gender, correlation_threshold)
+    #correlation_analysis(train_df_trans, num_cols_no_gender, correlation_threshold)
 
-    train_df_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.001, remove=True)
+    train_df_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.0001, remove=True)
 
     # Data overview after outlier removal
-    plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)   # Some features show multimodal distributions after outlier removal, likely due population subgroups (e.g., Gender, Age)
-    shapiro_wilk_test(train_df_cleaned, num_cols_no_gender)
-    correlation_analysis(train_df_cleaned, num_cols_no_gender, correlation_threshold)
+    #plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)   # Some features show multimodal distributions after outlier removal, likely due population subgroups (e.g., Gender, Age)
+    #shapiro_wilk_test(train_df_cleaned, num_cols_no_gender)
+    #correlation_analysis(train_df_cleaned, num_cols_no_gender, correlation_threshold)
+
+    train_full = train_df_cleaned
+
+    val_full = val_df_trans
+    val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=0.2, random_state=42)  # Simulate 20% missing data
+
+    test_full = test_df_trans
+    test_masked_df, test_mask = simulate_missing_data(test_full, missing_rate=0.2, random_state=42)  # Simulate 20% missing data
+
+
 
 if __name__ == "__main__":
     main()
