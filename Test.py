@@ -1,3 +1,5 @@
+import time
+import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,6 +11,12 @@ from sklearn.preprocessing import PowerTransformer, StandardScaler
 from pandas.api.types import is_numeric_dtype, is_categorical_dtype
 from scipy.stats import chi2
 from sklearn.impute import SimpleImputer
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer
+from sklearn.linear_model import BayesianRidge
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 
 
@@ -264,7 +272,7 @@ def mahalanobis_chi_outliers(df, numeric_cols, alpha=0.01, remove=False):
 # ---------------------------
 # Data Preparation (Simulate Missing Data)
 # ---------------------------
-def simulate_missing_data(df, missing_rate=0.2, random_state=42):
+def simulate_missing_data(df, missing_rate=0.2, random_state=42, prefix=""):
     """
     Randomly masks a percentage of data as missing (NaN) to simulate real cases.
     Returns a dataframe with masked values and a mask indicating which values were masked.
@@ -287,10 +295,146 @@ def simulate_missing_data(df, missing_rate=0.2, random_state=42):
         df_masked.at[row, col] = np.nan
         mask.at[row, col] = True
 
-    print(f"Percentage of missing values simulated: {missing_rate * 100:.0f}% (excluding Gender column)")
+    print(f"{prefix}: Percentage of missing values simulated: {missing_rate * 100:.0f}% (excluding Gender column)")
 
     return df_masked, mask
 
+# ---------------------------
+# Iterative Imputer + Performance Measurement
+# ---------------------------
+def iterative_imputer_once(
+        estimator,
+        train_df,
+        target_masked_df,
+        numeric_cols,
+        reference_full_df=None,
+        sample_posterior=False,
+        max_iter=10,
+        tol=1e-3,
+        random_state=42,
+        verbose=0
+):
+    """
+
+    """
+    train_X = train_df[numeric_cols].copy() # Get numeric columns from training set (full, no missing)
+    target_X = target_masked_df[numeric_cols].copy()    # Get numeric columns from target set (val/test with missing values)
+
+    # Define the IterativeImputer
+    imputer = IterativeImputer(
+        estimator=estimator,
+        sample_posterior=sample_posterior,
+        max_iter=max_iter,
+        tol=tol,
+        random_state=random_state,
+        verbose=verbose
+    )
+
+    start = time.perf_counter() # Start recording runtime
+    imputer.fit(train_X.values) # Fit only on training set to avoid data leakage
+    imputed_array = imputer.transform(target_X.values)  # Apply imputer to target set
+    elapsed = time.perf_counter() - start   # Calculate elapsed runtime
+
+    imputed_df = target_masked_df.copy()    # Copy the target masked dataframe
+    imputed_df[numeric_cols] = imputed_array    # Replace numeric columns with imputed values in the copy
+
+    metrics = {"time_sec": elapsed}
+    masked_locs = target_X.isnull() # Locations that were originally masked in the target set
+    n_masked = int(masked_locs.values.sum())    # Count of number of masked values
+
+    true_vals = reference_full_df[numeric_cols].values[masked_locs.values]  # True values from the reference full dataframe at the masked locations
+    pred_vals = imputed_array[masked_locs.values]   # Predicted (imputed) values at the masked locations
+
+    # Compute MAE, MSE, and RMSE only on the originally masked locations, comparing to true values against the predicted values
+    mae = mean_absolute_error(true_vals, pred_vals)
+    mse = mean_squared_error(true_vals, pred_vals)
+    rmse = math.sqrt(mse)
+
+    # Add metrics to dictionary to return
+    metrics.update({"mae": mae, "rmse": rmse, "n_masked": n_masked})
+
+    return imputed_df, imputer, metrics
+
+def evaluate_imputer_candidates(
+        candidates,
+        train_df,
+        target_masked_df,
+        numeric_cols,
+        reference_full_df=None,
+        sample_posterior=False,
+        max_iter=10,
+        tol=1e-3,
+        random_state=42,
+        verbose=0,
+        save_csv=False,
+        plot_results=False
+):
+    """
+
+    """
+    results = []
+    imputers = {}
+    imputed_dfs = {}
+
+    print("\n--- Running Imputer Candidates ---\n")
+    for name, est in candidates.items():    # For each candidate estimator
+        print(f">>> Running {name} ...")
+        try:
+            imputed_df, imputer, metrics = iterative_imputer_once(
+                estimator=est,
+                train_df=train_df,
+                target_masked_df=target_masked_df,
+                numeric_cols=numeric_cols,
+                reference_full_df=reference_full_df,
+                sample_posterior=sample_posterior,
+                max_iter=max_iter,
+                tol=tol,
+                random_state=random_state,
+                verbose=verbose
+            )
+
+            # Set up metrics and results to print
+            metrics["model"] = name
+            results.append(metrics)
+            imputers[name] = imputer
+            imputed_dfs[name] = imputed_df
+            print(f"{name} done in {metrics['time_sec']:.2f}s | MAE={metrics.get('mae', np.nan):.4f} | RMSE={metrics.get('rmse', np.nan):.4f}")
+
+            # Sanity check to ensure no NaNs remain in imputed dataframe
+        except Exception as e:
+            print(f"{name} failed: {e}")
+            results.append({
+                "model": name, "mae": np.nan, "rmse": np.nan,
+                "n_masked": 0, "time_sec": np.nan, "error": str(e)
+            })
+            imputers[name] = None
+            imputed_dfs[name] = None
+
+    # Compile results into a dataframe and sort by RMSE (if available) and print summary comparing model performance
+    results_df = pd.DataFrame(results)
+    results_df = results_df.sort_values(by=["rmse", "mae"], ascending=True)
+    results_df.reset_index(drop=True, inplace=True)
+    print("\n--- Imputer Performance Summary ---\n")
+    print(results_df[["model", "mae", "rmse", "n_masked", "time_sec"]])
+
+    # For saving results to CSV
+    if save_csv:
+        results_df.to_csv("imputer_results.csv", index=False)
+        print("Saved results to imputer_results.csv")
+
+    # For plotting results comparison
+    if plot_results and not results_df.empty:
+        fig, ax = plt.subplots(1, 3, figsize=(15, 4))
+        results_df.plot.bar(x='model', y='mae', ax=ax[0], legend=False, title='MAE')
+        results_df.plot.bar(x='model', y='rmse', ax=ax[1], legend=False, title='RMSE')
+        results_df.plot.bar(x='model', y='time_sec', ax=ax[2], legend=False, title='Time (s)')
+        for a in ax:
+            a.set_xlabel('')
+            a.set_xticklabels(results_df['model'], rotation=30, ha='right')
+        plt.tight_layout()
+        plt.show()
+
+    return results_df, imputers, imputed_dfs
 
 
 
@@ -303,7 +447,7 @@ def main():
     df = load_and_clean_data(filepath)
 
     # Data overview
-    #data_overview(df)
+    data_overview(df)
 
     df = df.drop_duplicates()
 
@@ -376,12 +520,34 @@ def main():
     train_full = train_df_cleaned
 
     val_full = val_df_trans
-    val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=0.2, random_state=42)  # Simulate 20% missing data
+    val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=0.2, random_state=42, prefix="val")  # Simulate 20% missing data
 
     test_full = test_df_trans
-    test_masked_df, test_mask = simulate_missing_data(test_full, missing_rate=0.2, random_state=42)  # Simulate 20% missing data
+    test_masked_df, test_mask = simulate_missing_data(test_full, missing_rate=0.2, random_state=42, prefix="test")  # Simulate 20% missing data
 
+    # Candidate estimators to embed inside IterativeImputer
+    candidates = {
+        "BayesianRidge": BayesianRidge(),
+        "KNN": KNeighborsRegressor(n_neighbors=5),
+        "RandomForest": RandomForestRegressor(n_estimators=100, n_jobs=-1, random_state=42)
+    }
 
+    # Evaluate candidates on validation masked set
+    results_df, imputers, imputed_dfs = evaluate_imputer_candidates(
+        candidates=candidates,
+        train_df=train_full,
+        target_masked_df=val_masked_df,
+        numeric_cols=num_cols_no_gender,
+        reference_full_df=val_full,
+        sample_posterior=False,
+        max_iter=10,
+        random_state=42,
+        verbose=0,
+        save_csv=True,
+        plot_results=True
+    )
+
+    print("\nBest candidate(s) by RMSE:\n", results_df.sort_values('rmse').head())
 
 if __name__ == "__main__":
     main()
