@@ -17,6 +17,7 @@ from sklearn.linear_model import BayesianRidge
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import KFold
 
 
 
@@ -436,6 +437,72 @@ def evaluate_imputer_candidates(
 
     return results_df, imputers, imputed_dfs
 
+# ---------------------------
+# K-Fold Cross-Validation
+# ---------------------------
+def cross_validate_imputers(
+    candidates,
+    full_train_df,
+    numeric_cols,
+    n_splits=5,
+    missing_rate=0.2,
+    random_state=42
+):
+    """
+    Runs k-fold cross-validation for imputer model comparison.
+    Each fold trains on (k-1)/k of the data and tests on the remaining 1/k,
+    simulating missing values each time.
+    """
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    all_fold_results = []
+
+    print(f"\n--- Starting {n_splits}-Fold Cross-Validation for Imputers ---\n")
+
+    fold_num = 1
+    for train_idx, val_idx in kf.split(full_train_df):
+        print(f"\n=== Fold {fold_num}/{n_splits} ===")
+        fold_num += 1
+
+        fold_train = full_train_df.iloc[train_idx]
+        fold_val = full_train_df.iloc[val_idx]
+
+        # Simulate missing data on validation fold
+        fold_val_masked, _ = simulate_missing_data(
+            fold_val,
+            missing_rate=missing_rate,
+            random_state=random_state + fold_num,
+            prefix=f"Fold {fold_num}"
+        )
+
+        # Evaluate imputers using existing function
+        results_df, _, _ = evaluate_imputer_candidates(
+            candidates=candidates,
+            train_df=fold_train,
+            target_masked_df=fold_val_masked,
+            numeric_cols=numeric_cols,
+            reference_full_df=fold_val,
+            sample_posterior=False,
+            max_iter=10,
+            random_state=random_state,
+            verbose=0,
+            save_csv=False,
+            plot_results=False
+        )
+
+        # Add fold index to results
+        results_df["fold"] = fold_num
+        all_fold_results.append(results_df)
+
+    # Combine results from all folds
+    combined_df = pd.concat(all_fold_results)
+
+    # Average across folds per model
+    summary_df = combined_df.groupby("model")[["mae", "rmse", "time_sec"]].mean().reset_index()
+
+    print("\n--- Cross-Validation Summary (Averaged over folds) ---\n")
+    print(summary_df)
+
+    return summary_df
 
 
 # ---------------------------
@@ -443,6 +510,8 @@ def evaluate_imputer_candidates(
 # ---------------------------
 def main():
     correlation_threshold = 0.9  # The threshold is 90% for considering features as highly correlated
+    missing_rate = 0.2  # 20% missing data to simulate
+
     filepath = r"C:\Users\Tze Huo Gucci Ho\Desktop\Git Projects\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
 
@@ -520,10 +589,10 @@ def main():
     train_full = train_df_cleaned
 
     val_full = val_df_trans
-    val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=0.2, random_state=42, prefix="val")  # Simulate 20% missing data
+    val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=missing_rate, random_state=42, prefix="val")  # Simulate 20% missing data
 
     test_full = test_df_trans
-    test_masked_df, test_mask = simulate_missing_data(test_full, missing_rate=0.2, random_state=42, prefix="test")  # Simulate 20% missing data
+    test_masked_df, test_mask = simulate_missing_data(test_full, missing_rate=missing_rate, random_state=42, prefix="test")  # Simulate 20% missing data
 
     # Candidate estimators to embed inside IterativeImputer
     candidates = {
@@ -532,7 +601,18 @@ def main():
         "RandomForest": RandomForestRegressor(n_estimators=100, n_jobs=-1, random_state=42)
     }
 
+
+    # We performn nested validation:
     # Evaluate candidates on validation masked set
+    cv_results = cross_validate_imputers(
+        candidates=candidates,
+        full_train_df=train_full,
+        numeric_cols=num_cols_no_gender,
+        n_splits=5,
+        missing_rate=missing_rate,
+        random_state=42
+    )
+
     results_df, imputers, imputed_dfs = evaluate_imputer_candidates(
         candidates=candidates,
         train_df=train_full,
@@ -543,11 +623,22 @@ def main():
         max_iter=10,
         random_state=42,
         verbose=0,
-        save_csv=True,
-        plot_results=True
+        save_csv=False,
+        plot_results=False
     )
+    # Print the best model from CV (lowest RMSE)
+    best_model_name = cv_results.sort_values("rmse").iloc[0]["model"]
+    print(f"\nBest model from CV by RMSE: {best_model_name}")
+    print("\nBest validation comparison between candidate(s) by RMSE:\n", results_df.sort_values('rmse').head())
 
-    print("\nBest candidate(s) by RMSE:\n", results_df.sort_values('rmse').head())
+    # Combined CV and validation results for easy comparison
+    comparison_df = cv_results.merge(
+        results_df[["model", "mae", "rmse", "time_sec"]],
+        on="model", suffixes=("_cv", "_val")
+    ).sort_values("rmse_val")
+
+    print("\n--- Combined CV vs Validation Summary ---\n")
+    print(comparison_df)
 
 if __name__ == "__main__":
     main()
