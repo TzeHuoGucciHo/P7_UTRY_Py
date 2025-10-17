@@ -331,15 +331,25 @@ def iterative_imputer_once(
         verbose=verbose
     )
 
-    start = time.perf_counter() # Start recording runtime
+    start_fit = time.perf_counter() # Start recording runtime for fitting
     imputer.fit(train_X.values) # Fit only on training set to avoid data leakage
+    fit_time = time.perf_counter() - start_fit  # Calculate elapsed runtime for fitting
+
+    start_transform = time.perf_counter()    # Start recording runtime for transforming
     imputed_array = imputer.transform(target_X.values)  # Apply imputer to target set
-    elapsed = time.perf_counter() - start   # Calculate elapsed runtime
+    transform_time = time.perf_counter() - start_transform  # Calculate elapsed runtime for transforming
+
+    elapsed = fit_time + transform_time
 
     imputed_df = target_masked_df.copy()    # Copy the target masked dataframe
     imputed_df[numeric_cols] = imputed_array    # Replace numeric columns with imputed values in the copy
 
-    metrics = {"time_sec": elapsed}
+    metrics = {
+        "fit_time": fit_time,
+        "transform_time": transform_time,
+        "total_time": elapsed
+    }
+
     masked_locs = target_X.isnull() # Locations that were originally masked in the target set
     n_masked = int(masked_locs.values.sum())    # Count of number of masked values
 
@@ -397,17 +407,22 @@ def evaluate_imputer_candidates(
             # Set up metrics and results to print
             metrics["model"] = name
             results.append(metrics)
+            results_df = pd.DataFrame(results)
+            results_df = results_df.sort_values(by=["rmse", "mae"], ascending=True)
+
             imputers[name] = imputer
             imputed_dfs[name] = imputed_df
-            print(f"{name} done in {metrics['time_sec']:.2f}s | MAE={metrics.get('mae', np.nan):.4f} | RMSE={metrics.get('rmse', np.nan):.4f}")
+            print(
+                f"{name} done in {metrics['total_time']:.2f}s | MAE={metrics.get('mae', np.nan):.4f} | RMSE={metrics.get('rmse', np.nan):.4f}")
 
             # Sanity check to ensure no NaNs remain in imputed dataframe
         except Exception as e:
             print(f"{name} failed: {e}")
             results.append({
                 "model": name, "mae": np.nan, "rmse": np.nan,
-                "n_masked": 0, "time_sec": np.nan, "error": str(e)
+                "n_masked": 0, "total_time": np.nan, "error": str(e)
             })
+
             imputers[name] = None
             imputed_dfs[name] = None
 
@@ -416,7 +431,7 @@ def evaluate_imputer_candidates(
     results_df = results_df.sort_values(by=["rmse", "mae"], ascending=True)
     results_df.reset_index(drop=True, inplace=True)
     print("\n--- Imputer Performance Summary ---\n")
-    print(results_df[["model", "mae", "rmse", "n_masked", "time_sec"]])
+    print(results_df[["model", "mae", "rmse", "n_masked", "total_time"]])
 
     # For saving results to CSV
     if save_csv:
@@ -428,7 +443,7 @@ def evaluate_imputer_candidates(
         fig, ax = plt.subplots(1, 3, figsize=(15, 4))
         results_df.plot.bar(x='model', y='mae', ax=ax[0], legend=False, title='MAE')
         results_df.plot.bar(x='model', y='rmse', ax=ax[1], legend=False, title='RMSE')
-        results_df.plot.bar(x='model', y='time_sec', ax=ax[2], legend=False, title='Time (s)')
+        results_df.plot.bar(x='model', y='total_time', ax=ax[2], legend=False, title='Total Time (s)')
         for a in ax:
             a.set_xlabel('')
             a.set_xticklabels(results_df['model'], rotation=30, ha='right')
@@ -497,7 +512,7 @@ def cross_validate_imputers(
     combined_df = pd.concat(all_fold_results)
 
     # Average across folds per model
-    summary_df = combined_df.groupby("model")[["mae", "rmse", "time_sec"]].mean().reset_index()
+    summary_df = combined_df.groupby("model")[["mae", "rmse", "total_time"]].mean().reset_index()
 
     print("\n--- Cross-Validation Summary (Averaged over folds) ---\n")
     print(summary_df)
@@ -633,7 +648,7 @@ def main():
 
     # Combined CV and validation results for easy comparison
     comparison_df = cv_results.merge(
-        results_df[["model", "mae", "rmse", "time_sec"]],
+        results_df[["model", "mae", "rmse", "total_time"]],
         on="model", suffixes=("_cv", "_val")
     ).sort_values("rmse_val")
 
