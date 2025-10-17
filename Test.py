@@ -1,3 +1,5 @@
+import time
+import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,6 +11,13 @@ from sklearn.preprocessing import PowerTransformer, StandardScaler
 from pandas.api.types import is_numeric_dtype, is_categorical_dtype
 from scipy.stats import chi2
 from sklearn.impute import SimpleImputer
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer
+from sklearn.linear_model import BayesianRidge
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import KFold
 
 
 
@@ -264,7 +273,7 @@ def mahalanobis_chi_outliers(df, numeric_cols, alpha=0.01, remove=False):
 # ---------------------------
 # Data Preparation (Simulate Missing Data)
 # ---------------------------
-def simulate_missing_data(df, missing_rate=0.2, random_state=42):
+def simulate_missing_data(df, missing_rate=0.2, random_state=42, prefix=""):
     """
     Randomly masks a percentage of data as missing (NaN) to simulate real cases.
     Returns a dataframe with masked values and a mask indicating which values were masked.
@@ -287,11 +296,228 @@ def simulate_missing_data(df, missing_rate=0.2, random_state=42):
         df_masked.at[row, col] = np.nan
         mask.at[row, col] = True
 
-    print(f"Percentage of missing values simulated: {missing_rate * 100:.0f}% (excluding Gender column)")
+    print(f"{prefix}: Percentage of missing values simulated: {missing_rate * 100:.0f}% (excluding Gender column)")
 
     return df_masked, mask
 
+# ---------------------------
+# Iterative Imputer + Performance Measurement
+# ---------------------------
+def iterative_imputer_once(
+        estimator,
+        train_df,
+        target_masked_df,
+        numeric_cols,
+        reference_full_df=None,
+        sample_posterior=False,
+        max_iter=10,
+        tol=1e-3,
+        random_state=42,
+        verbose=0
+):
+    """
 
+    """
+    train_X = train_df[numeric_cols].copy() # Get numeric columns from training set (full, no missing)
+    target_X = target_masked_df[numeric_cols].copy()    # Get numeric columns from target set (val/test with missing values)
+
+    # Define the IterativeImputer
+    imputer = IterativeImputer(
+        estimator=estimator,
+        sample_posterior=sample_posterior,
+        max_iter=max_iter,
+        tol=tol,
+        random_state=random_state,
+        verbose=verbose
+    )
+
+    start_fit = time.perf_counter() # Start recording runtime for fitting
+    imputer.fit(train_X.values) # Fit only on training set to avoid data leakage
+    fit_time = time.perf_counter() - start_fit  # Calculate elapsed runtime for fitting
+
+    start_transform = time.perf_counter()    # Start recording runtime for transforming
+    imputed_array = imputer.transform(target_X.values)  # Apply imputer to target set
+    transform_time = time.perf_counter() - start_transform  # Calculate elapsed runtime for transforming
+
+    elapsed = fit_time + transform_time
+
+    imputed_df = target_masked_df.copy()    # Copy the target masked dataframe
+    imputed_df[numeric_cols] = imputed_array    # Replace numeric columns with imputed values in the copy
+
+    metrics = {
+        "fit_time": fit_time,
+        "transform_time": transform_time,
+        "total_time": elapsed
+    }
+
+    masked_locs = target_X.isnull() # Locations that were originally masked in the target set
+    n_masked = int(masked_locs.values.sum())    # Count of number of masked values
+
+    true_vals = reference_full_df[numeric_cols].values[masked_locs.values]  # True values from the reference full dataframe at the masked locations
+    pred_vals = imputed_array[masked_locs.values]   # Predicted (imputed) values at the masked locations
+
+    # Compute MAE, MSE, and RMSE only on the originally masked locations, comparing to true values against the predicted values
+    mae = mean_absolute_error(true_vals, pred_vals)
+    mse = mean_squared_error(true_vals, pred_vals)
+    rmse = math.sqrt(mse)
+
+    # Add metrics to dictionary to return
+    metrics.update({"mae": mae, "rmse": rmse, "n_masked": n_masked})
+
+    return imputed_df, imputer, metrics
+
+def evaluate_imputer_candidates(
+        candidates,
+        train_df,
+        target_masked_df,
+        numeric_cols,
+        reference_full_df=None,
+        sample_posterior=False,
+        max_iter=10,
+        tol=1e-3,
+        random_state=42,
+        verbose=0,
+        save_csv=False,
+        plot_results=False
+):
+    """
+
+    """
+    results = []
+    imputers = {}
+    imputed_dfs = {}
+
+    print("\n--- Running Imputer Candidates ---\n")
+    for name, est in candidates.items():    # For each candidate estimator
+        print(f">>> Running {name} ...")
+        try:
+            imputed_df, imputer, metrics = iterative_imputer_once(
+                estimator=est,
+                train_df=train_df,
+                target_masked_df=target_masked_df,
+                numeric_cols=numeric_cols,
+                reference_full_df=reference_full_df,
+                sample_posterior=sample_posterior,
+                max_iter=max_iter,
+                tol=tol,
+                random_state=random_state,
+                verbose=verbose
+            )
+
+            # Set up metrics and results to print
+            metrics["model"] = name
+            results.append(metrics)
+            results_df = pd.DataFrame(results)
+            results_df = results_df.sort_values(by=["rmse", "mae"], ascending=True)
+
+            imputers[name] = imputer
+            imputed_dfs[name] = imputed_df
+            print(
+                f"{name} done in {metrics['total_time']:.2f}s | MAE={metrics.get('mae', np.nan):.4f} | RMSE={metrics.get('rmse', np.nan):.4f}")
+
+            # Sanity check to ensure no NaNs remain in imputed dataframe
+        except Exception as e:
+            print(f"{name} failed: {e}")
+            results.append({
+                "model": name, "mae": np.nan, "rmse": np.nan,
+                "n_masked": 0, "total_time": np.nan, "error": str(e)
+            })
+
+            imputers[name] = None
+            imputed_dfs[name] = None
+
+    # Compile results into a dataframe and sort by RMSE (if available) and print summary comparing model performance
+    results_df = pd.DataFrame(results)
+    results_df = results_df.sort_values(by=["rmse", "mae"], ascending=True)
+    results_df.reset_index(drop=True, inplace=True)
+    print("\n--- Imputer Performance Summary ---\n")
+    print(results_df[["model", "mae", "rmse", "n_masked", "total_time"]])
+
+    # For saving results to CSV
+    if save_csv:
+        results_df.to_csv("imputer_results.csv", index=False)
+        print("Saved results to imputer_results.csv")
+
+    # For plotting results comparison
+    if plot_results and not results_df.empty:
+        fig, ax = plt.subplots(1, 3, figsize=(15, 4))
+        results_df.plot.bar(x='model', y='mae', ax=ax[0], legend=False, title='MAE')
+        results_df.plot.bar(x='model', y='rmse', ax=ax[1], legend=False, title='RMSE')
+        results_df.plot.bar(x='model', y='total_time', ax=ax[2], legend=False, title='Total Time (s)')
+        for a in ax:
+            a.set_xlabel('')
+            a.set_xticklabels(results_df['model'], rotation=30, ha='right')
+        plt.tight_layout()
+        plt.show()
+
+    return results_df, imputers, imputed_dfs
+
+# ---------------------------
+# K-Fold Cross-Validation
+# ---------------------------
+def cross_validate_imputers(
+    candidates,
+    full_train_df,
+    numeric_cols,
+    n_splits=5,
+    missing_rate=0.2,
+    random_state=42
+):
+    """
+    Runs k-fold cross-validation for imputer model comparison.
+    Each fold trains on (k-1)/k of the data and tests on the remaining 1/k,
+    simulating missing values each time.
+    """
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    all_fold_results = []
+
+    print(f"\n--- Starting {n_splits}-Fold Cross-Validation for Imputers ---\n")
+
+    fold_num = 1
+    for train_idx, val_idx in kf.split(full_train_df):
+        print(f"\n=== Fold {fold_num}/{n_splits} ===")
+        fold_num += 1
+
+        fold_train = full_train_df.iloc[train_idx]
+        fold_val = full_train_df.iloc[val_idx]
+
+        # Simulate missing data on validation fold
+        fold_val_masked, _ = simulate_missing_data(
+            fold_val,
+            missing_rate=missing_rate,
+            random_state=random_state + fold_num,
+            prefix=f"Fold {fold_num}"
+        )
+
+        # Evaluate imputers using existing function
+        results_df, _, _ = evaluate_imputer_candidates(
+            candidates=candidates,
+            train_df=fold_train,
+            target_masked_df=fold_val_masked,
+            numeric_cols=numeric_cols,
+            reference_full_df=fold_val,
+            sample_posterior=False,
+            max_iter=10,
+            random_state=random_state,
+            verbose=0,
+            save_csv=False,
+            plot_results=False
+        )
+
+        # Add fold index to results
+        results_df["fold"] = fold_num
+        all_fold_results.append(results_df)
+
+    # Combine results from all folds
+    combined_df = pd.concat(all_fold_results)
+
+    # Average across folds per model
+    summary_df = combined_df.groupby("model")[["mae", "rmse", "total_time"]].mean().reset_index()
+
+    print("\n--- Cross-Validation Summary (Averaged over folds) ---\n")
+    print(summary_df)
+
+    return summary_df
 
 
 # ---------------------------
@@ -299,11 +525,13 @@ def simulate_missing_data(df, missing_rate=0.2, random_state=42):
 # ---------------------------
 def main():
     correlation_threshold = 0.9  # The threshold is 90% for considering features as highly correlated
+    missing_rate = 0.2  # 20% missing data to simulate
+
     filepath = r"C:\Users\Tze Huo Gucci Ho\Desktop\Git Projects\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
 
     # Data overview
-    #data_overview(df)
+    data_overview(df)
 
     df = df.drop_duplicates()
 
@@ -376,12 +604,56 @@ def main():
     train_full = train_df_cleaned
 
     val_full = val_df_trans
-    val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=0.2, random_state=42)  # Simulate 20% missing data
+    val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=missing_rate, random_state=42, prefix="val")  # Simulate 20% missing data
 
     test_full = test_df_trans
-    test_masked_df, test_mask = simulate_missing_data(test_full, missing_rate=0.2, random_state=42)  # Simulate 20% missing data
+    test_masked_df, test_mask = simulate_missing_data(test_full, missing_rate=missing_rate, random_state=42, prefix="test")  # Simulate 20% missing data
+
+    # Candidate estimators to embed inside IterativeImputer
+    candidates = {
+        "BayesianRidge": BayesianRidge(),
+        "KNN": KNeighborsRegressor(n_neighbors=5),
+        "RandomForest": RandomForestRegressor(n_estimators=100, n_jobs=-1, random_state=42)
+    }
 
 
+    # We performn nested validation:
+    # Evaluate candidates on validation masked set
+    cv_results = cross_validate_imputers(
+        candidates=candidates,
+        full_train_df=train_full,
+        numeric_cols=num_cols_no_gender,
+        n_splits=5,
+        missing_rate=missing_rate,
+        random_state=42
+    )
+
+    results_df, imputers, imputed_dfs = evaluate_imputer_candidates(
+        candidates=candidates,
+        train_df=train_full,
+        target_masked_df=val_masked_df,
+        numeric_cols=num_cols_no_gender,
+        reference_full_df=val_full,
+        sample_posterior=False,
+        max_iter=10,
+        random_state=42,
+        verbose=0,
+        save_csv=False,
+        plot_results=False
+    )
+    # Print the best model from CV (lowest RMSE)
+    best_model_name = cv_results.sort_values("rmse").iloc[0]["model"]
+    print(f"\nBest model from CV by RMSE: {best_model_name}")
+    print("\nBest validation comparison between candidate(s) by RMSE:\n", results_df.sort_values('rmse').head())
+
+    # Combined CV and validation results for easy comparison
+    comparison_df = cv_results.merge(
+        results_df[["model", "mae", "rmse", "total_time"]],
+        on="model", suffixes=("_cv", "_val")
+    ).sort_values("rmse_val")
+
+    print("\n--- Combined CV vs Validation Summary ---\n")
+    print(comparison_df)
 
 if __name__ == "__main__":
     main()
