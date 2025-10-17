@@ -1,4 +1,3 @@
-@'
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -6,29 +5,59 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "body-measure"
 version = "0.1.0"
-description = "Two-view body measurement pipeline with DeepLabV3 segmentation and robust scale fusion (ArUco + height)"
+description = "Two-view body measurement (front + side) with segmentation, pose hints and ellipse circumference."
+authors = [{ name = "Pookie team" }]
 readme = "README.md"
 requires-python = ">=3.9"
-authors = [{ name = "Your Team" }]
-license = { text = "Proprietary" }
+license = { text = "MIT" }
 
+# Basispakker (CPU-kompatible). PyTorch ligger som optional (se nedenfor).
 dependencies = [
-  "numpy>=1.26",
-  "opencv-contrib-python>=4.9"
+  "numpy>=1.23",
+  "opencv-contrib-python>=4.8",
+  "mediapipe>=0.10",         # valgfrit i runtime; håndteres fail-safe i koden
+  "pillow>=10.0",
+  "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]
+# Udviklingsværktøjer
 dev = [
-  "pytest>=8.0"
+  "pytest>=7.0",
+  "black>=24.3",
+  "ruff>=0.5",
+  "mypy>=1.8",
+]
+
+# PyTorch/torchvision lægges som 'extras', da installation varierer per platform.
+# Bemærk: versioner her er placeholders; mange vil installere via PyTorchs egen index-url.
+pytorch = [
+  "torch>=2.2; platform_system != 'Windows'",
+  "torchvision>=0.17; platform_system != 'Windows'",
 ]
 
 [project.scripts]
+# Installerer en CLI-kommando: `body-measure`
 body-measure = "body_measure.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["body_measure*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = ["E", "F", "I"]
+ignore = ["E501"]  # vi styrer linjelængde via formatter
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
 pythonpath = ["src"]
-'@ | Set-Content -Encoding UTF8 .\pyproject.toml
+

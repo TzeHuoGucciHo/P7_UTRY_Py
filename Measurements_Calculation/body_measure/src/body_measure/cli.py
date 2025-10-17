@@ -1,103 +1,68 @@
-from __future__ import annotations
-import argparse, json, cv2, os, sys, inspect
+import argparse
+import json
+import os
+import cv2
+
 from . import measure_v2 as M
 
-def _resolve(p: str | None) -> str | None:
-    if p is None: return None
-    return p if os.path.isabs(p) else os.path.abspath(p)
+def _read_img(path: str):
+    img = cv2.imread(path, cv2.IMREAD_COLOR)
+    return img
+
+
 
 def main():
-    ap = argparse.ArgumentParser(
-        description="Two-view body measurement (DeepLabV3). CLI er kompatibel på tværs af measure.py-versioner."
+    p = argparse.ArgumentParser()
+    p.add_argument("--front", required=True, help="Front image path")
+    p.add_argument("--side",  required=True, help="Side image path")
+    p.add_argument("--height-cm", type=float, default=None, help="Person height in cm (recommended)")
+    p.add_argument("--backend", choices=["deeplabv3","opencv","auto"], default="deeplabv3")
+    p.add_argument("--device", choices=["cpu","cuda"], default="cuda")
+    p.add_argument("--debug-dir", default=None)
+    p.add_argument("--save-masks", action="store_true")
+    p.add_argument("--setup-load", default=None)
+    p.add_argument("--setup-save", default=None)
+    p.add_argument("--calibrate-many", default=None)
+    p.add_argument("--aruco-mm", type=float, default=None)
+    p.add_argument("--target-height", type=int, default=2000)
+    p.add_argument("--crop-margin", type=float, default=0.02)
+    p.add_argument("--no-profile-scale", action="store_true")
+    p.add_argument("--gender", choices=["male","female"], default="male",
+                   help="Use gender-specific measurement tuning")
+
+    p.add_argument("--print-runtime-info", action="store_true")
+    args = p.parse_args()
+
+    front = _read_img(args.front)
+    side  = _read_img(args.side)
+    if front is None: raise FileNotFoundError(args.front)
+    if side  is None: raise FileNotFoundError(args.side)
+
+    to_call = dict(
+        front_bgr=front,
+        side_bgr=side,
+        height_cm=args.height_cm,
+        debug_dir=args.debug_dir,
+        save_masks=args.save_masks,
+        prefer_backend=args.backend,
+        device=args.device,
+        setup_load=args.setup_load,
+        setup_save=args.setup_save,
+        calibrate_many=args.calibrate_many,
+        aruco_mm=args.aruco_mm,
+        target_height_px=args.target_height,
+        crop_margin_ratio=args.crop_margin,
+        no_profile_scale=args.no_profile_scale,
+        gender=args.gender,
     )
-    ap.add_argument("--front", required=True, help="Path to front image")
-    ap.add_argument("--side",  required=True, help="Path to side image")
-
-    ap.add_argument("--height-cm", type=float, default=None, help="User height in cm")
-    ap.add_argument("--backend", choices=["deeplabv3","opencv","auto"], default="deeplabv3")
-    ap.add_argument("--device",  choices=["cpu","cuda"], default="cuda")
-
-    ap.add_argument("--debug-dir", type=str, default=None, help="Write overlays/masks here")
-    ap.add_argument("--save-masks", action="store_true", help="Also write raw masks as PNG")
-
-    ap.add_argument("--setup-load", type=str, default=None, help="Load setup profile JSON")
-    ap.add_argument("--setup-save", type=str, default=None, help="Save setup profile JSON")
-
-    # Normalisering
-    ap.add_argument("--target-height", type=int, default=2000, help="Normalized bbox height in pixels")
-    ap.add_argument("--crop-margin", type=float, default=0.02, help="Fractional margin around bbox")
-
-    # Skala fallback-kontrol
-    ap.add_argument("--no-profile-scale", action="store_true",
-                    help="If height is missing, ignore profile ppc_ref (will error without scale).")
-
-    # Nye/valgfri flag – sendes KUN hvis measure.compute accepterer dem:
-    ap.add_argument("--row-mode", choices=["auto","pose","profile"], default="auto",
-                    help="Only used if your measure.py supports it (keypoint-anchored rows). Ignored otherwise.")
-    ap.add_argument("--aruco-mm", type=float, default=None, help="Ignored by marker-less versions (accepted if supported).")
-    ap.add_argument("--waist-band", type=str, default=None, help="[compat] Ignored unless supported.")
-    ap.add_argument("--hip-band", type=str, default=None, help="[compat] Ignored unless supported.")
-    ap.add_argument("--waist-shift", type=float, default=None, help="[compat] Ignored unless supported.")
-    ap.add_argument("--shoulder-shift", type=float, default=None, help="[compat] Ignored unless supported.")
-    ap.add_argument("--calibrate-many", type=str, default=None, help="[compat] Ignored unless supported.")
-
-    # Debug: print hvilke filer der bruges
-    ap.add_argument("--print-runtime-info", action="store_true",
-                    help="Print paths for body_measure and measure module + compute signature.")
-
-    args = ap.parse_args()
-
-    # Indlæs billeder
-    front_path = _resolve(args.front)
-    side_path  = _resolve(args.side)
-    front = cv2.imread(front_path, cv2.IMREAD_COLOR)
-    side  = cv2.imread(side_path,  cv2.IMREAD_COLOR)
-    if front is None:
-        print(f"ERROR: Cannot read front image: {front_path}", file=sys.stderr)
-        raise FileNotFoundError(front_path)
-    if side is None:
-        print(f"ERROR: Cannot read side image: {side_path}", file=sys.stderr)
-        raise FileNotFoundError(side_path)
-
-    # Byg argumenter til compute
-    want = {
-        "front_bgr": front,
-        "side_bgr": side,
-        "height_cm": args.height_cm,
-        "debug_dir": _resolve(args.debug_dir),
-        "save_masks": args.save_masks,
-        "prefer_backend": args.backend,
-        "device": args.device,
-        "setup_load": _resolve(args.setup_load),
-        "setup_save": _resolve(args.setup_save),
-        "target_height_px": args.target_height,
-        "crop_margin_ratio": args.crop_margin,
-        "no_profile_scale": args.no_profile_scale,
-        # Valgfri/”nye” – sendes kun hvis supported:
-        "row_mode": args.row_mode,
-        "aruco_mm": args.aruco_mm,
-        "waist_band": args.waist_band,
-        "hip_band": args.hip_band,
-        "waist_shift_rel": args.waist_shift,
-        "shoulder_shift_rel": args.shoulder_shift,
-        "calibrate_many": args.calibrate_many,
-    }
-
-    # Filtrér baseret på compute-signaturen
-    sig = inspect.signature(M.compute)
-    allowed = set(sig.parameters.keys())
-    filtered = {k: v for k, v in want.items() if k in allowed and v is not None}
-
-    # Har compute **kwargs?
-    has_var_kwargs = any(p.kind == p.VAR_KEYWORD for p in sig.parameters.values())
-    to_call = want if has_var_kwargs else filtered
 
     if args.print_runtime_info:
-        import body_measure as BM
-        print("body_measure file:", BM.__file__, file=sys.stderr)
-        print("measure file     :", M.__file__, file=sys.stderr)
-        print("compute signature:", sig, file=sys.stderr)
-        print("passing keys     :", sorted(to_call.keys()), file=sys.stderr)
+        import inspect, os as _os
+        print("body_measure file:", _os.path.abspath(M.__file__))
+        print("measure file     :", _os.path.abspath(M.__file__))
+        sig = inspect.signature(M.compute)
+        print("compute signature:", sig)
+        print("passing keys     :", list(to_call.keys()))
 
     res = M.compute(**to_call)
     print(json.dumps(res, indent=2))
