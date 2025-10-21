@@ -18,6 +18,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import KFold
+from sklearn.model_selection import ParameterGrid
 
 
 
@@ -376,9 +377,7 @@ def evaluate_imputer_candidates(
         max_iter=10,
         tol=1e-3,
         random_state=42,
-        verbose=0,
-        save_csv=False,
-        plot_results=False
+        verbose=0
 ):
     """
 
@@ -433,23 +432,6 @@ def evaluate_imputer_candidates(
     print("\n--- Imputer Performance Summary ---\n")
     print(results_df[["model", "mae", "rmse", "n_masked", "total_time"]])
 
-    # For saving results to CSV
-    if save_csv:
-        results_df.to_csv("imputer_results.csv", index=False)
-        print("Saved results to imputer_results.csv")
-
-    # For plotting results comparison
-    if plot_results and not results_df.empty:
-        fig, ax = plt.subplots(1, 3, figsize=(15, 4))
-        results_df.plot.bar(x='model', y='mae', ax=ax[0], legend=False, title='MAE')
-        results_df.plot.bar(x='model', y='rmse', ax=ax[1], legend=False, title='RMSE')
-        results_df.plot.bar(x='model', y='total_time', ax=ax[2], legend=False, title='Total Time (s)')
-        for a in ax:
-            a.set_xlabel('')
-            a.set_xticklabels(results_df['model'], rotation=30, ha='right')
-        plt.tight_layout()
-        plt.show()
-
     return results_df, imputers, imputed_dfs
 
 # ---------------------------
@@ -500,8 +482,6 @@ def cross_validate_imputers(
             max_iter=10,
             random_state=random_state,
             verbose=0,
-            save_csv=False,
-            plot_results=False
         )
 
         # Add fold index to results
@@ -519,13 +499,126 @@ def cross_validate_imputers(
 
     return summary_df
 
+# ---------------------------
+# Grid Search for Hyperparameter Tuning
+# ---------------------------
+def grid_search_imputers(
+        train_df,
+        target_masked_df,
+        numeric_cols,
+        reference_full_df=None,
+        random_state=42,
+        verbose=0
+):
+    """
+
+    """
+    param_grids = {
+        "BayesianRidge": {
+        "estimator": [BayesianRidge()]
+        },
+        "KNN": {
+            "estimator": [KNeighborsRegressor()],
+            "estimator__n_neighbors": [3, 5, 7, 9],
+            "estimator__weights": ["uniform", "distance"],
+        },
+        "RandomForest": {
+            "estimator": [RandomForestRegressor(n_jobs=-1, random_state=random_state)],
+            "estimator__n_estimators": [50, 100, 200],
+            "estimator__max_depth": [None, 10, 20],
+        },
+    }
+
+    all_results = []
+    best_models = {}
+    best_params = {}
+
+    print("\n--- Starting Grid Search for Imputer Models ---\n")
+
+    for model_name, grid in param_grids.items():
+        print(f">>> Tuning {model_name} ...")
+        best_rmse = np.inf
+        best_param_set = None
+        best_model_instance = None
+
+        for params in ParameterGrid(grid):
+            estimator = params.pop("estimator")
+            estimator.set_params(**{k.replace("estimator__", ""): v for k, v in params.items()})
+
+            _, _, metrics = iterative_imputer_once(
+                estimator=estimator,
+                train_df=train_df,
+                target_masked_df=target_masked_df,
+                numeric_cols=numeric_cols,
+                reference_full_df=reference_full_df,
+                random_state=random_state,
+                verbose=verbose
+            )
+
+            all_results.append({
+                "model": model_name,
+                "params": params,
+                "mae": metrics["mae"],
+                "rmse": metrics["rmse"],
+                "total_time": metrics["total_time"]
+            })
+
+            if metrics["rmse"] < best_rmse:
+                best_rmse = metrics["rmse"]
+                best_param_set = params
+                best_model_instance = estimator
+
+        best_models[model_name] = best_model_instance
+        best_params[model_name] = best_param_set
+
+        print(f"Best {model_name}: RMSE={best_rmse:.4f} | Params={best_param_set}")
+
+    grid_results_df = pd.DataFrame(all_results)
+
+    print("\n--- Grid Search Summary ---\n")
+    print(grid_results_df.groupby("model")[["rmse", "mae", "total_time"]].mean())
+
+    return grid_results_df, best_models, best_params
+
+# ---------------------------
+# Retrain Models with B Parameters
+# ---------------------------
+def retrain_models_with_best_params(
+        best_models,
+        train_df,
+        target_masked_df,
+        numeric_cols,
+        reference_full_df=None,
+        random_state=42,
+        verbose=0
+):
+    """
+
+    """
+    print("\n--- Retraining Best Models and Evaluating Performance ---\n")
+
+    results_df, imputers, imputed_dfs = evaluate_imputer_candidates(
+        candidates=best_models,
+        train_df=train_df,
+        target_masked_df=target_masked_df,
+        numeric_cols=numeric_cols,
+        reference_full_df=reference_full_df,
+        random_state=random_state,
+        verbose=verbose
+    )
+
+    print("\nFinal Evaluation of Tuned Models:")
+    print(results_df[["model", "mae", "rmse", "total_time"]])
+
+    return results_df, imputers, imputed_dfs
+
 
 # ---------------------------
 # Main Workflow
 # ---------------------------
 def main():
     correlation_threshold = 0.9  # The threshold is 90% for considering features as highly correlated
-    missing_rate = 0.2  # 20% missing data to simulate
+    missing_rate = 0.25  # 25% missing data to simulate
 
     filepath = r"C:\Users\Tze Huo Gucci Ho\Desktop\Git Projects\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
@@ -638,8 +731,6 @@ def main():
         max_iter=10,
         random_state=42,
         verbose=0,
-        save_csv=False,
-        plot_results=False
     )
     # Print the best model from CV (lowest RMSE)
     best_model_name = cv_results.sort_values("rmse").iloc[0]["model"]
@@ -654,6 +745,30 @@ def main():
 
     print("\n--- Combined CV vs Validation Summary ---\n")
     print(comparison_df)
+
+    # Grid Search for Best Parameters ---
+    grid_results_df, best_models, best_params = grid_search_imputers(
+        train_df=train_full,
+        target_masked_df=val_masked_df,
+        numeric_cols=num_cols_no_gender,
+        reference_full_df=val_full,
+        random_state=42,
+        verbose=0
+    )
+
+    print("\nBest parameters per model:\n", best_params)
+
+    # Retrain and Evaluate the Best Models ---
+    final_results_df, imputers, imputed_dfs = retrain_models_with_best_params(
+        best_models=best_models,
+        train_df=train_full,
+        target_masked_df=val_masked_df,
+        numeric_cols=num_cols_no_gender,
+        reference_full_df=val_full,
+        random_state=42,
+        verbose=0
+    )
+
 
 if __name__ == "__main__":
     main()
