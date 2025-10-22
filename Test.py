@@ -62,26 +62,13 @@ def convert_inches_to_cm(df, length_cols):
 # ---------------------------
 # Split Dataset
 # ---------------------------
-def split_dataset(df, test_size=0.15, val_size=0.176, random_state=42):
+def split_dataset(df, train_frac=0.7, val_frac=0.15, test_frac=0.15, random_state=42):
     """
-    Splits the data into training (70%), validation (15%), and test sets (15%).
-    Removes 15% from the data, leaving 85%.
-    Then removes 17.6% from the remaining 85%, which is ≈15% of the original data.
-    0.176 * 85% ≈ 15% of original dataset
-    Does this randomly by rows (people), not columns (features).
+    Splits dataframe into train, validation, and test sets in 70/15/15 ratio.
     """
-    # First split into train+val and test for each person (rows)
-    train_val_df, test_df = train_test_split(df, test_size=test_size, random_state=random_state)
-
-    # Then split train_val into train and validation
-    # val_size here is proportion of the train_val_df (not original df)
-    # 0.176 * 85% ≈ 15% of the total dataset
-    train_df, val_df = train_test_split(train_val_df, test_size=val_size, random_state=random_state)
-
-    print(f"Train shape: {train_df.shape}")
-    print(f"Validation shape: {val_df.shape}")
-    print(f"Test shape: {test_df.shape}")
-
+    train_df, temp_df = train_test_split(df, train_size=train_frac, random_state=random_state)
+    val_size = val_frac / (val_frac + test_frac)
+    val_df, test_df = train_test_split(temp_df, train_size=val_size, random_state=random_state)
     return train_df, val_df, test_df
 
 # ---------------------------
@@ -613,6 +600,7 @@ def retrain_models_with_best_params(
     return results_df, imputers, imputed_dfs
 
 
+
 # ---------------------------
 # Main Workflow
 # ---------------------------
@@ -629,7 +617,7 @@ def main():
     df = df.drop_duplicates()
 
     # Split dataset into train(70%)/val(15%)/test(15%) (by rows, i.e. people)
-    train_df, val_df, test_df = split_dataset(df, test_size=0.15, val_size=0.176)
+    train_df, val_df, test_df = split_dataset(df, train_frac=0.7, val_frac=0.15, test_frac=0.15, random_state=42)
 
     # Impute missing values, fit only on train to avoid data leakage then apply to val and test
     num_cols = train_df.select_dtypes(include=[np.number]).columns
