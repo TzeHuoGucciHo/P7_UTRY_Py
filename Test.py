@@ -454,7 +454,7 @@ def cross_validate_imputers(
         fold_val_masked, _ = simulate_missing_data(
             fold_val,
             missing_rate=missing_rate,
-            random_state=random_state + fold_num,
+            random_state=random_state,
             prefix=f"Fold {fold_num}"
         )
 
@@ -654,7 +654,11 @@ def main():
     #correlation_analysis(train_df, num_cols_no_gender, correlation_threshold)
 
     #print("Before transformation:\n", train_df[num_cols_no_gender].skew().sort_values(ascending=False))
-    train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
+    #train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
+
+    # Remove outliers first (then transform and scale)
+    train_df_cleaned = mahalanobis_chi_outliers(train_df, length_cols, alpha=0.0001, remove=True)
+
     #print("\nAfter transformation:\n", train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False))
     # Skewness was measured before and after transformation.
     # Features like Belly, HeadCircumference, and ShoulderWidth were highly right-skewed (>5),
@@ -675,7 +679,11 @@ def main():
 
     #correlation_analysis(train_df_trans, num_cols_no_gender, correlation_threshold)
 
-    train_df_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.0001, remove=True)
+    #train_df_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.0001, remove=True)
+
+    # Then fit transformer on cleaned data
+    train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df_cleaned, val_df, test_df,
+                                                                      num_cols_no_gender)
 
     # Data overview after outlier removal
     #plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)   # Some features show multimodal distributions after outlier removal, likely due population subgroups (e.g., Gender, Age)
@@ -698,7 +706,7 @@ def main():
     }
 
 
-    # We performn nested validation:
+    # We perform nested validation:
     # Evaluate candidates on validation masked set
     cv_results = cross_validate_imputers(
         candidates=candidates,
