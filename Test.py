@@ -25,7 +25,6 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import ParameterGrid
 
 
-
 # ML task is multivariate imputation
 # ChatGPT and Copilot assisted in formatting, structuring, and writing this code.
 
@@ -420,6 +419,7 @@ def evaluate_imputer_candidates(
     results_df = pd.DataFrame(results)
     results_df = results_df.sort_values(by=["rmse", "mae"], ascending=True)
     results_df.reset_index(drop=True, inplace=True)
+    results_df['accuracy_speed_score'] = results_df['rmse'] / results_df['total_time']  # High means slow and inaccurate, low means fast and accurate
     print("\n--- Imputer Performance Summary ---\n")
     print(results_df[["model", "mae", "rmse", "n_masked", "total_time"]])
 
@@ -436,11 +436,6 @@ def cross_validate_imputers(
     missing_rate=0.2,
     random_state=42
 ):
-    """
-    Runs k-fold cross-validation for imputer model comparison.
-    Each fold trains on (k-1)/k of the data and tests on the remaining 1/k,
-    simulating missing values each time.
-    """
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
     all_fold_results = []
 
@@ -449,20 +444,22 @@ def cross_validate_imputers(
     fold_num = 1
     for train_idx, val_idx in kf.split(full_train_df):
         print(f"\n=== Fold {fold_num}/{n_splits} ===")
-        fold_num += 1
 
         fold_train = full_train_df.iloc[train_idx]
         fold_val = full_train_df.iloc[val_idx]
+
+        # Create a fold-specific random state
+        fold_random_state = random_state + fold_num
 
         # Simulate missing data on validation fold
         fold_val_masked, _ = simulate_missing_data(
             fold_val,
             missing_rate=missing_rate,
-            random_state=random_state,
+            random_state=fold_random_state,  # <-- use fold-specific seed
             prefix=f"Fold {fold_num}"
         )
 
-        # Evaluate imputers using existing function
+        # Evaluate imputers
         results_df, _, _ = evaluate_imputer_candidates(
             candidates=candidates,
             train_df=fold_train,
@@ -471,15 +468,17 @@ def cross_validate_imputers(
             reference_full_df=fold_val,
             sample_posterior=False,
             max_iter=10,
-            random_state=random_state,
+            random_state=fold_random_state,  # <-- use same fold-specific seed
             verbose=0,
         )
 
-        # Add fold index to results
+        # Add fold index
         results_df["fold"] = fold_num
         all_fold_results.append(results_df)
 
-    # Combine results from all folds
+        fold_num += 1  # Increment after using it
+
+    # Combine results
     combined_df = pd.concat(all_fold_results)
 
     # Average across folds per model
