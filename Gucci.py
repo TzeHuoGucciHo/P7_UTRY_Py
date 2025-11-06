@@ -693,7 +693,7 @@ def main():
     #shapiro_wilk_test(train_df_cleaned, num_cols_no_gender)
     #correlation_analysis(train_df_cleaned, num_cols_no_gender, correlation_threshold)
 
-    train_full = train_df_cleaned
+    train_full = train_df_trans
 
     val_full = val_df_trans
     val_masked_df, val_mask = simulate_missing_data(val_full, missing_rate=missing_rate, random_state=42, prefix="val")  # Simulate 20% missing data
