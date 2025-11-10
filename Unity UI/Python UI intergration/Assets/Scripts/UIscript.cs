@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using SFB; // Namespace for StandaloneFileBrowser
 using System.IO;
+using NUnit.Framework;
 using UnityEngine.EventSystems;
 using TMPro;
 
@@ -9,6 +11,8 @@ public class UIscript : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
 {
     public TextMeshProUGUI Text;
     public Color Utry = new Color(234, 88, 12);
+    
+    
     public void OnPointerEnter(PointerEventData eventdata)
     {
         Text.color = Utry;
@@ -45,10 +49,9 @@ public class UIscript : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         var fileData = File.ReadAllBytes(filePath);
         Texture2D tex = new Texture2D(2, 2);
         tex.LoadImage(fileData);
-
         displayImage.texture = tex;
-   
-
+        RectTransform rt = displayImage.rectTransform;
+        rt.sizeDelta = new Vector2(420, 890);
         yield return null;
     }
 
