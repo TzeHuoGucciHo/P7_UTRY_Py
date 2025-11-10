@@ -3,5 +3,9 @@
   <component name="Black">
     <option name="sdkName" value="P7_UTRY_3.12" />
   </component>
+<<<<<<< HEAD
   <component name="ProjectRootManager" version="2" project-jdk-name="ML" project-jdk-type="Python SDK" />
+=======
+  <component name="ProjectRootManager" version="2" project-jdk-name="P7_UTRY_3.12" project-jdk-type="Python SDK" />
+>>>>>>> origin/main
 </project>
