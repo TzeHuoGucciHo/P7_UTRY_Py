@@ -1,9 +1,34 @@
-import argparse
-import json
+import argparse, json, os, sys, time
+from body_measure import measure_v2 as M
 import os
 import cv2
+import numpy as np
 
-from . import measure_v2 as M
+def load_image(path: str) -> np.ndarray:
+    """Robust billedindlæsning (understøtter også Windows-stier med mellemrum/unicode)."""
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"Image not found: {path}")
+    # Brug imdecode for at undgå problemer med unicode-stier
+    data = np.fromfile(path, dtype=np.uint8)
+    img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    if img is None:
+        raise ValueError(f"Failed to read image: {path}")
+    return img
+
+
+def _to_worksheet_schema(res: dict) -> dict:
+    """
+    Mapper til ønskede kolonnenavne.
+    Ignorerer bevidst: Gender, Age, HeadCircumference, Belly, ArmLength,
+    ShoulderToWaist, WaistToKnee, LegLength.
+    """
+    return {
+        "ShoulderWidth": res.get("shoulder_width_cm"),
+        "ChestWidth":    res.get("chest_width_cm"),
+        "Waist":         res.get("waist_cm"),
+        "Hips":          res.get("hip_cm"),
+        "TotalHeight":   res.get("input_height_cm"),  # direkte den indtastede højde
+    }
 
 def _read_img(path: str):
     img = cv2.imread(path, cv2.IMREAD_COLOR)

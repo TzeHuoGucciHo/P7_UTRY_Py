@@ -4,6 +4,16 @@ from typing import Dict, Optional, Tuple, Callable
 import cv2
 import numpy as np
 
+# =======================
+# QUICK TOGGLE — vælg ÉN kombination
+# =======================
+
+# --- Global (grid 82) ---
+PARAM_TARGET_HEIGHT_PX = 2200
+PARAM_CROP_MARGIN_RATIO = 0.0017
+KEEP_BY_KEY = {"chest": 0.8395764121252157, "waist": 0.6557841821537503, "hip": 0.9373690683077852, "thigh": 0.7908863001992785}
+ARMR_BY_KEY = {"chest": 0.019982132976907208, "waist": 0.02256598041367644, "hip": 0.04173145394123699, "thigh": 0.017981314598465695}
+
 from .segmenter import SilhouetteSegmenter
 from .pose import measurement_rows_from_mask
 from .geometry import (
