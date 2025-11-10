@@ -1260,10 +1260,10 @@ PrefabInstance:
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1628930580}
+      objectReference: {fileID: 11500000, guid: 555cc343e6b9a88439b0c99159beea49, type: 3}
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: OnClickChooseImage
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
@@ -1686,6 +1686,7 @@ GameObject:
   - component: {fileID: 867378704}
   - component: {fileID: 867378703}
   - component: {fileID: 867378707}
+  - component: {fileID: 867378708}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1804,6 +1805,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PythonRunner
   pythonPath: C:/Users/marku/AppData/Local/Programs/Python/Python312/python.exe
   pythonScriptPath: C:\Users\marku\OneDrive - Aalborg Universitet\Githubs\P7_UTRY_Py\Test.py
+--- !u!114 &867378708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 867378702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 555cc343e6b9a88439b0c99159beea49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::displayNumbers
+  height: {fileID: 1341598596}
+  shoulderWidth: {fileID: 0}
+  waistWidth: {fileID: 0}
+  hipWidth: {fileID: 0}
 --- !u!1001 &880404784
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3079,17 +3096,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3538489568436620160, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
   m_PrefabInstance: {fileID: 524971769}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1628930580 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5110294918549679007, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
-  m_PrefabInstance: {fileID: 524971769}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c9bd7613fcce964790e037134920e55, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIscript
 --- !u!1 &1647413414
 GameObject:
   m_ObjectHideFlags: 0
