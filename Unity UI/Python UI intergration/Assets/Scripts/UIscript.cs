@@ -6,27 +6,41 @@ using System.IO;
 using NUnit.Framework;
 using UnityEngine.EventSystems;
 using TMPro;
+using UnityEngine.SceneManagement;
 
-public class UIscript : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+public class UIscript : MonoBehaviour
 {
-    public TextMeshProUGUI Text;
-    public Color Utry = new Color(234, 88, 12);
-    
-    
-    public void OnPointerEnter(PointerEventData eventdata)
+    public Button[] buttons; 
+    public Color UtryBlue = new Color(2, 2, 2);
+    public Color UtryOrange = new Color(2,2,2);
+
+    public GameObject Popup;
+
+   
+
+    public void ChangeButtonColor(Button btn)
     {
-        Text.color = Utry;
+        btn.GetComponentInChildren<TMP_Text>().color = UtryOrange;
+        btn.GetComponent<Image>().color = Color.white;
+
     }
 
-    public void OnPointerExit(PointerEventData eventdata)
+    public void PointerExit(Button btn)
     {
-        Text.color = Color.white;
+        btn.GetComponentInChildren<TMP_Text>().color = Color.white;
+        btn.GetComponent<Image>().color = UtryOrange;
+    }
+    public void OpenManuel()
+    {
+        SceneManager.LoadScene("Manuel input");
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OpenImageUpload()
     {
-        EventSystem.current.SetSelectedGameObject(null);
+        Popup.SetActive(false);
     }
+
+   
     
     public RawImage displayImage; // Drag your UI RawImage here in the inspector
 

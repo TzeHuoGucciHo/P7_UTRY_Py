@@ -151,7 +151,7 @@ GameObject:
   - component: {fileID: 8141180049396074123}
   - component: {fileID: 3004741365250122088}
   - component: {fileID: 84511550377435938}
-  - component: {fileID: 5110294918549679007}
+  - component: {fileID: 4196910916842108525}
   m_Layer: 5
   m_Name: ButtonPrefab
   m_TagString: Untagged
@@ -263,7 +263,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UploadImage, Assembly-CSharp
-        m_MethodName: OnClick_OpenFile
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -288,7 +288,7 @@ MonoBehaviour:
   m_EffectColor: {r: 0.9176471, g: 0.34509805, b: 0.04705883, a: 0.5}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 1
---- !u!114 &5110294918549679007
+--- !u!114 &4196910916842108525
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -297,9 +297,39 @@ MonoBehaviour:
   m_GameObject: {fileID: 5733559618244225884}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c9bd7613fcce964790e037134920e55, type: 3}
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIscript
-  Text: {fileID: 4473842900597097855}
-  Utry: {r: 0.9176471, g: 0.34509805, b: 0.04705883, a: 1}
-  displayImage: {fileID: 0}
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: 
+          m_MethodName: 
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: 
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - eventID: 1
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: 
+          m_MethodName: 
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: 
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
