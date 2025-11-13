@@ -2,6 +2,8 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+
 public class WebFunctions : MonoBehaviour
 {
     public Sprite img1;
@@ -11,6 +13,23 @@ public class WebFunctions : MonoBehaviour
     public Sprite img5;
 
     public Image displayImg;
+
+    public GameObject popup;
+
+    private void Start()
+    {
+        popup.SetActive(false);
+    }
+
+    public void ImageLoad()
+    {
+        SceneManager.LoadScene("UtryMain");
+    }
+
+    public void ManuelLoad()
+    {
+        SceneManager.LoadScene("Manuel input");
+    }
 
     public void changeImg1()
     {

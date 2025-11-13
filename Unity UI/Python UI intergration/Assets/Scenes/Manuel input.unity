@@ -169,7 +169,7 @@ GameObject:
   - component: {fileID: 32788779}
   - component: {fileID: 32788778}
   m_Layer: 5
-  m_Name: BIg Image
+  m_Name: Display image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2140,7 +2140,7 @@ GameObject:
   - component: {fileID: 694328019}
   - component: {fileID: 694328018}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Utry header
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2254,7 +2254,7 @@ GameObject:
   - component: {fileID: 793737958}
   - component: {fileID: 793737957}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Explain box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

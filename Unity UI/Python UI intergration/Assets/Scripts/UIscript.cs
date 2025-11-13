@@ -14,9 +14,7 @@ public class UIscript : MonoBehaviour
     public Color UtryBlue = new Color(2, 2, 2);
     public Color UtryOrange = new Color(2,2,2);
 
-    public GameObject Popup;
-
-   
+       
 
     public void ChangeButtonColor(Button btn)
     {
@@ -30,17 +28,7 @@ public class UIscript : MonoBehaviour
         btn.GetComponentInChildren<TMP_Text>().color = Color.white;
         btn.GetComponent<Image>().color = UtryOrange;
     }
-    public void OpenManuel()
-    {
-        SceneManager.LoadScene("Manuel input");
-    }
-
-    public void OpenImageUpload()
-    {
-        Popup.SetActive(false);
-    }
-
-   
+      
     
     public RawImage displayImage; // Drag your UI RawImage here in the inspector
 
