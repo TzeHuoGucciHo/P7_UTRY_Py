@@ -4,6 +4,7 @@ import os
 import cv2
 import numpy as np
 
+
 def load_image(path: str) -> np.ndarray:
     """Robust billedindlæsning (understøtter også Windows-stier med mellemrum/unicode)."""
     if not os.path.isfile(path):
@@ -30,10 +31,10 @@ def _to_worksheet_schema(res: dict) -> dict:
         "TotalHeight":   res.get("input_height_cm"),  # direkte den indtastede højde
     }
 
+
 def _read_img(path: str):
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     return img
-
 
 
 def main():
@@ -41,8 +42,8 @@ def main():
     p.add_argument("--front", required=True, help="Front image path")
     p.add_argument("--side",  required=True, help="Side image path")
     p.add_argument("--height-cm", type=float, default=None, help="Person height in cm (recommended)")
-    p.add_argument("--backend", choices=["deeplabv3","opencv","auto"], default="deeplabv3")
-    p.add_argument("--device", choices=["cpu","cuda"], default="cuda")
+    p.add_argument("--backend", choices=["deeplabv3", "opencv", "auto"], default="deeplabv3")
+    p.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     p.add_argument("--debug-dir", default=None)
     p.add_argument("--save-masks", action="store_true")
     p.add_argument("--setup-load", default=None)
@@ -52,16 +53,27 @@ def main():
     p.add_argument("--target-height", type=int, default=2000)
     p.add_argument("--crop-margin", type=float, default=0.02)
     p.add_argument("--no-profile-scale", action="store_true")
-    p.add_argument("--gender", choices=["male","female"], default="male",
-                   help="Use gender-specific measurement tuning")
-
+    p.add_argument(
+        "--gender",
+        choices=["male", "female"],
+        default="male",
+        help="Use gender-specific measurement tuning",
+    )
+    p.add_argument(
+        "--out-json",
+        default=None,
+        help="Hvis sat, gemmes resultaterne som JSON til denne sti.",
+    )
     p.add_argument("--print-runtime-info", action="store_true")
+
     args = p.parse_args()
 
     front = _read_img(args.front)
-    side  = _read_img(args.side)
-    if front is None: raise FileNotFoundError(args.front)
-    if side  is None: raise FileNotFoundError(args.side)
+    side = _read_img(args.side)
+    if front is None:
+        raise FileNotFoundError(args.front)
+    if side is None:
+        raise FileNotFoundError(args.side)
 
     to_call = dict(
         front_bgr=front,
@@ -90,7 +102,17 @@ def main():
         print("passing keys     :", list(to_call.keys()))
 
     res = M.compute(**to_call)
-    print(json.dumps(res, indent=2))
+
+    if args.out_json:
+        out_path = args.out_json
+        out_dir = os.path.dirname(out_path)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(res, f, indent=2)
+    else:
+        print(json.dumps(res, indent=2))
+
 
 if __name__ == "__main__":
     main()

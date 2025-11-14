@@ -557,7 +557,7 @@ def main():
     correlation_threshold = 0.9  # The threshold is 90% for considering features as highly correlated
     missing_rate = 0.25  # 25% missing data to simulate
 
-    filepath = r"C:\Users\Tze Huo Gucci Ho\Desktop\Git Projects\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
+    filepath = r"Mendeley Datasets/Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
 
     # Data overview
@@ -775,6 +775,7 @@ def main():
         initial_strategy='mean'
     )
     final_imputer.fit(train_val_full[num_cols_no_gender])
+
 
     joblib.dump(final_imputer, "final_imputer.pkl")
 
