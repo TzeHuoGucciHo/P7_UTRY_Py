@@ -228,7 +228,8 @@ def transform_and_scale(train_df, val_df, test_df, numeric_cols):
     val_df_trans[numeric_cols] = val_transformed
     test_df_trans[numeric_cols] = test_transformed
 
-    return train_df_trans, val_df_trans, test_df_trans
+    return train_df_trans, val_df_trans, test_df_trans, transformer
+
 
 # ---------------------------
 # Outlier Handling
@@ -583,7 +584,7 @@ def main():
         test_df[cat_cols] = cat_imputer.transform(test_df[cat_cols])
 
     # Data overview
-    #data_overview(train_df)
+    data_overview(train_df)
 
     # Ordinal/label encoding, maps 1 to 0 and 2 to 1. Replaces the existing gender column with the new binary values.
     mapping = {1: 0, 2: 1}
@@ -598,9 +599,9 @@ def main():
     #train_df_cm = convert_inches_to_cm(train_df, length_cols)   # Converts inches to cm for body measurements
 
     # Data overview
-    #plot_plots(train_df, num_cols_no_gender, length_cols)
-    #shapiro_wilk_test(train_df, num_cols_no_gender)
-    #correlation_analysis(train_df, num_cols_no_gender, correlation_threshold)
+    plot_plots(train_df, num_cols_no_gender, length_cols)
+    shapiro_wilk_test(train_df, num_cols_no_gender)
+    correlation_analysis(train_df, num_cols_no_gender, correlation_threshold)
 
     #print("Before transformation:\n", train_df[num_cols_no_gender].skew().sort_values(ascending=False))
     #train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
@@ -614,30 +615,34 @@ def main():
     # but Yeo-Johnson transformation reduced these to near-symmetric distributions (~0),
     # improving normality assumptions for later modeling.
 
-    #before_skew = train_df[num_cols_no_gender].skew().sort_values(ascending=False)
-    #train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender)
-    #after_skew = train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False)
-    #plot_skewness_comparison(before_skew, after_skew)
+    before_skew = train_df_cleaned[num_cols_no_gender].skew().sort_values(ascending=False)
+    train_df_trans, val_df_trans, test_df_trans, transformer = transform_and_scale(
+        train_df_cleaned,
+        val_df,
+        test_df,
+        num_cols_no_gender
+    )
+    after_skew = train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False)
+    plot_skewness_comparison(before_skew, after_skew)
 
     # Data overview
-    #plot_plots(train_df_trans, num_cols_no_gender, length_cols)
-    #shapiro_wilk_test(train_df_trans, num_cols_no_gender)
+    plot_plots(train_df_trans, num_cols_no_gender, length_cols)
+    shapiro_wilk_test(train_df_trans, num_cols_no_gender)
     # Although the Shapiro–Wilk test rejects strict normality for several features,
     # visual inspection of histograms and Q-Q plots indicates that most features are approximately normally distributed.
     # Minor skewness and tail deviations remain but are acceptable for multivariate analysis assumptions.
 
-    #correlation_analysis(train_df_trans, num_cols_no_gender, correlation_threshold)
+    correlation_analysis(train_df_trans, num_cols_no_gender, correlation_threshold)
 
     #train_df_cleaned = mahalanobis_chi_outliers(train_df_trans, length_cols, alpha=0.0001, remove=True)
 
-    # Then fit transformer on cleaned data
-    train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df_cleaned, val_df, test_df,
-                                                                      num_cols_no_gender)
+    # Then fit transformer on cleaned data (deprecated line, as we decided to transform before outlier removal)
+    # train_df_trans, val_df_trans, test_df_trans = transform_and_scale(train_df_cleaned, val_df, test_df, num_cols_no_gender)
 
     # Data overview after outlier removal
-    #plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)   # Some features show multimodal distributions after outlier removal, likely due population subgroups (e.g., Gender, Age)
-    #shapiro_wilk_test(train_df_cleaned, num_cols_no_gender)
-    #correlation_analysis(train_df_cleaned, num_cols_no_gender, correlation_threshold)
+    plot_plots(train_df_cleaned, num_cols_no_gender, length_cols)   # Some features show multimodal distributions after outlier removal, likely due population subgroups (e.g., Gender, Age)
+    shapiro_wilk_test(train_df_cleaned, num_cols_no_gender)
+    correlation_analysis(train_df_cleaned, num_cols_no_gender, correlation_threshold)
 
     train_full = train_df_trans.copy()
 
@@ -656,15 +661,15 @@ def main():
         RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
     ]
 
-#    compare_models_results_df = compare_models(
-#        models=candidates,
-#        train_df=train_full,
-#        target_df=val_masked_df,
-#        target_df_full=val_full,
-#        target_df_mask=val_mask_values,
-#        numeric_cols=num_cols_no_gender,
-#        verbose=True
-#    )
+    compare_models_results_df = compare_models(
+        models=candidates,
+        train_df=train_full,
+        target_df=val_masked_df,
+        target_df_full=val_full,
+        target_df_mask=val_mask_values,
+        numeric_cols=num_cols_no_gender,
+        verbose=True
+    )
 
     cv_results = cross_validation(
         train_full=train_full,
@@ -775,6 +780,8 @@ def main():
         initial_strategy='mean'
     )
     final_imputer.fit(train_val_full[num_cols_no_gender])
+
+    joblib.dump(transformer, "transformer.pkl")
 
     joblib.dump(final_imputer, "final_imputer.pkl")
 
