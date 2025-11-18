@@ -6,6 +6,7 @@ using System.IO;
 using NUnit.Framework;
 using UnityEngine.EventSystems;
 using TMPro;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine.SceneManagement;
 
 public class UIscript : MonoBehaviour
@@ -14,7 +15,13 @@ public class UIscript : MonoBehaviour
     public Color UtryBlue = new Color(2, 2, 2);
     public Color UtryOrange = new Color(2,2,2);
 
-       
+    public Image explain;
+    public Image sizeGuide;
+
+    private void Start()
+    {
+        sizeGuide.enabled = false;
+    }
 
     public void ChangeButtonColor(Button btn)
     {
@@ -27,6 +34,12 @@ public class UIscript : MonoBehaviour
     {
         btn.GetComponentInChildren<TMP_Text>().color = Color.white;
         btn.GetComponent<Image>().color = UtryOrange;
+    }
+
+    public void ConfirmSizes()
+    {
+        explain.enabled = false;
+        sizeGuide.enabled = true;
     }
       
     
