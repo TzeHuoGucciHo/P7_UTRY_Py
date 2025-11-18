@@ -1,10 +1,11 @@
 fileFormatVersion: 2
-guid: 4fc9643284156b1438a3a598a3e4a725
+guid: 6dfbc9ec15c8c8b47bb5046e5ea4d554
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4098585319241098050
-    second: Screenshot 2025-11-18 100711_0
+      213: -6227182879009360667
+    second: Screenshot 2025-11-18 at 12-40-50 Tommy Jeans SIGNATURE CITY - T-shirts
+      print - desert sand dune_sand - Zalando.dk_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +38,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -74,8 +75,8 @@ TextureImporter:
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
+    textureFormat: 4
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -100,13 +101,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Screenshot 2025-11-18 100711_0
+      name: Screenshot 2025-11-18 at 12-40-50 Tommy Jeans SIGNATURE CITY - T-shirts
+        print - desert sand dune_sand - Zalando.dk_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 591
-        height: 407
+        width: 605
+        height: 414
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +117,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2432ff2f1a911e830800000000000000
-      internalID: 4098585319241098050
+      spriteID: 5e4b0412a2a9499a0800000000000000
+      internalID: -6227182879009360667
       vertices: []
       indices: 
       edges: []
@@ -135,7 +137,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Screenshot 2025-11-18 100711_0: 4098585319241098050
+      Screenshot 2025-11-18 at 12-40-50 Tommy Jeans SIGNATURE CITY - T-shirts print - desert sand dune_sand - Zalando.dk_0: -6227182879009360667
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
