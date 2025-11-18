@@ -1,10 +1,11 @@
 fileFormatVersion: 2
-guid: bb1812e0d0649c54096c926d67818605
+guid: f3daefa3674156c4ebbde17a60b022de
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6635926774751355294
-    second: Zalando_0
+      213: -6634989055458043577
+    second: "Screenshot 2025-11-18 at 15-05-54 Performance skovmandsskjorte m\xE6nd
+      \u2013 Vimpulze_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +38,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -74,8 +75,8 @@ TextureImporter:
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 2
+    textureFormat: 4
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -100,13 +101,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Zalando_0
+      name: "Screenshot 2025-11-18 at 15-05-54 Performance skovmandsskjorte m\xE6nd
+        \u2013 Vimpulze_0"
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1050
-        height: 697
+        width: 463
+        height: 665
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +117,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 26e117bc1c378e3a0800000000000000
-      internalID: -6635926774751355294
+      spriteID: 74991d49b98cbe3a0800000000000000
+      internalID: -6634989055458043577
       vertices: []
       indices: 
       edges: []
@@ -135,7 +137,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Zalando_0: -6635926774751355294
+      "Screenshot 2025-11-18 at 15-05-54 Performance skovmandsskjorte m\xE6nd \u2013 Vimpulze_0": -6634989055458043577
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

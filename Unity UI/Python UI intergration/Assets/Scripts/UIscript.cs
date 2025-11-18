@@ -16,12 +16,6 @@ public class UIscript : MonoBehaviour
     public Color UtryOrange = new Color(2,2,2);
 
     public Image explain;
-    public Image sizeGuide;
-
-    private void Start()
-    {
-        sizeGuide.enabled = false;
-    }
 
     public void ChangeButtonColor(Button btn)
     {
@@ -39,7 +33,7 @@ public class UIscript : MonoBehaviour
     public void ConfirmSizes()
     {
         explain.enabled = false;
-        sizeGuide.enabled = true;
+        
     }
       
     

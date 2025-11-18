@@ -10,7 +10,6 @@ public class WebFunctions : MonoBehaviour
     public Sprite img2;
     public Sprite img3;
     public Sprite img4;
-    public Sprite img5;
 
     public Image displayImg;
 
@@ -34,6 +33,7 @@ public class WebFunctions : MonoBehaviour
     public void changeImg1()
     {
         displayImg.sprite = img1;
+        Debug.Log("test one");
     }
     public void changeImg2()
     {
@@ -47,9 +47,5 @@ public class WebFunctions : MonoBehaviour
     {
         displayImg.sprite = img4;
     }
-    public void changeImg5()
-    {
-        displayImg.sprite = img5;
-    }
-    
+
 }

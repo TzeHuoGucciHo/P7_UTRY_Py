@@ -1,10 +1,11 @@
 fileFormatVersion: 2
-guid: f0186f84cc6e64b4abd79b017a1e8440
+guid: 9817e8813ebbb2e4aa1a3569a5d67bb1
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5925851634452128385
-    second: Pic4_0
+      213: -2835951416335180734
+    second: "Screenshot 2025-11-18 at 14-13-46 Performance skovmandsskjorte m\xE6nd
+      \u2013 Vimpulze_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +47,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -74,7 +75,7 @@ TextureImporter:
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: -1
+    textureFormat: 4
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
@@ -100,13 +101,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Pic4_0
+      name: "Screenshot 2025-11-18 at 14-13-46 Performance skovmandsskjorte m\xE6nd
+        \u2013 Vimpulze_0"
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 762
-        height: 1100
+        width: 166
+        height: 166
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +117,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f7d10d0c55523cda0800000000000000
-      internalID: -5925851634452128385
+      spriteID: 24c531d563da4a8d0800000000000000
+      internalID: -2835951416335180734
       vertices: []
       indices: 
       edges: []
@@ -125,7 +127,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +137,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Pic4_0: -5925851634452128385
+      "Screenshot 2025-11-18 at 14-13-46 Performance skovmandsskjorte m\xE6nd \u2013 Vimpulze_0": -2835951416335180734
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

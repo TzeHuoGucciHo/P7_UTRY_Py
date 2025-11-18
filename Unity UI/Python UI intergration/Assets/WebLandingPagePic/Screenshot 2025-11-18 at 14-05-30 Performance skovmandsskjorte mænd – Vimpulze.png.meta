@@ -1,10 +1,11 @@
 fileFormatVersion: 2
-guid: 5c705afde65398540967edd1477dded0
+guid: 5d3b744226b22f248b020f81822c8595
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7309396318853227182
-    second: Panelbar 1_0
+      213: 6770934511106278234
+    second: "Screenshot 2025-11-18 at 14-05-30 Performance skovmandsskjorte m\xE6nd
+      \u2013 Vimpulze_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +52,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 64
+  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,13 +101,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Panelbar 1_0
+      name: "Screenshot 2025-11-18 at 14-05-30 Performance skovmandsskjorte m\xE6nd
+        \u2013 Vimpulze_0"
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1918
-        height: 86
+        width: 442
+        height: 665
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +117,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 25d943c56cecf8a90800000000000000
-      internalID: -7309396318853227182
+      spriteID: a534ceb501137fd50800000000000000
+      internalID: 6770934511106278234
       vertices: []
       indices: 
       edges: []
@@ -135,7 +137,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Panelbar 1_0: -7309396318853227182
+      "Screenshot 2025-11-18 at 14-05-30 Performance skovmandsskjorte m\xE6nd \u2013 Vimpulze_0": 6770934511106278234
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

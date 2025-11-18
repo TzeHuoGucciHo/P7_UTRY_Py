@@ -1,10 +1,11 @@
 fileFormatVersion: 2
-guid: 9905618612f0c884293fe6b5321ce68f
+guid: 08606ed39be06494bb8ba324fd11fda5
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7913034430077261592
-    second: Screenshot 2025-11-10 093002_0
+      213: 2686607113516573271
+    second: "Screenshot 2025-11-18 at 14-08-26 Performance skovmandsskjorte m\xE6nd
+      \u2013 Vimpulze_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +38,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -74,8 +75,8 @@ TextureImporter:
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 0
+    textureFormat: 4
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -100,13 +101,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Screenshot 2025-11-10 093002_0
+      name: "Screenshot 2025-11-18 at 14-08-26 Performance skovmandsskjorte m\xE6nd
+        \u2013 Vimpulze_0"
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1912
-        height: 131
+        width: 166
+        height: 166
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +117,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8e82fc36c114f2290800000000000000
-      internalID: -7913034430077261592
+      spriteID: 752613c7feeb84520800000000000000
+      internalID: 2686607113516573271
       vertices: []
       indices: 
       edges: []
@@ -135,7 +137,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Screenshot 2025-11-10 093002_0: -7913034430077261592
+      "Screenshot 2025-11-18 at 14-08-26 Performance skovmandsskjorte m\xE6nd \u2013 Vimpulze_0": 2686607113516573271
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
