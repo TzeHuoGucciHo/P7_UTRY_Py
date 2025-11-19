@@ -1,42 +1,13 @@
-using System;
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
-using SFB; // Namespace for StandaloneFileBrowser
-using System.IO;
-using NUnit.Framework;
-using UnityEngine.EventSystems;
 using TMPro;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
-using UnityEngine.SceneManagement;
+using System.IO;
+using SFB; // Namespace for StandaloneFileBrowser
 
-public class UIscript : MonoBehaviour
+public class displayImage : MonoBehaviour
 {
-    public Button[] buttons; 
-    public Color UtryBlue = new Color(2, 2, 2);
-    public Color UtryOrange = new Color(2,2,2);
-
-    public Image explain;
-
-    public void ChangeButtonColor(Button btn)
-    {
-        btn.GetComponentInChildren<TMP_Text>().color = UtryOrange;
-        btn.GetComponent<Image>().color = Color.white;
-
-    }
-
-    public void PointerExit(Button btn)
-    {
-        btn.GetComponentInChildren<TMP_Text>().color = Color.white;
-        btn.GetComponent<Image>().color = UtryOrange;
-    }
-
-    public void ConfirmSizes()
-    {
-        explain.enabled = false;
-    }
-      
-    
-    public RawImage displayImage; // Drag your UI RawImage here in the inspector
+    public RawImage display; // Drag your UI RawImage here in the inspector
 
     public void OnClickChooseImage()
     {
@@ -57,7 +28,7 @@ public class UIscript : MonoBehaviour
         var fileData = File.ReadAllBytes(filePath);
         Texture2D tex = new Texture2D(2, 2);
         tex.LoadImage(fileData);
-        displayImage.texture = tex;
+        display.texture = tex;
         
         // Max allowed size for the RawImage
         float maxW = 400f;
@@ -72,11 +43,9 @@ public class UIscript : MonoBehaviour
         // New size
         float newW = imgW * scale;
         float newH = imgH * scale;
-        RectTransform rt = displayImage.rectTransform;
+        RectTransform rt = display.rectTransform;
         rt.sizeDelta = new Vector2(newW, newH);
         
         yield return null;
     }
-
-    
 }
