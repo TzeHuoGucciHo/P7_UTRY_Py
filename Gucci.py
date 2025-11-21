@@ -617,11 +617,13 @@ def main():
 
     before_skew = train_df_cleaned[num_cols_no_gender].skew().sort_values(ascending=False)
     train_df_trans, val_df_trans, test_df_trans, transformer = transform_and_scale(
-        train_df_cleaned,
+        train_df,
         val_df,
         test_df,
         num_cols_no_gender
     )
+    print(train_df_trans[num_cols_no_gender].corr())
+
     after_skew = train_df_trans[num_cols_no_gender].skew().sort_values(ascending=False)
     plot_skewness_comparison(before_skew, after_skew)
 
