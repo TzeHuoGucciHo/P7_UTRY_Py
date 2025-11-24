@@ -3,11 +3,37 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.IO;
-using SFB; // Namespace for StandaloneFileBrowser
+using Mediapipe.Tasks.Vision.PoseLandmarker;
+using Mediapipe.Tasks.Core;
+using Mediapipe.Tasks.Vision.Core;
+using SFB;
+using Unity.VisualScripting; // Namespace for StandaloneFileBrowser
+
 
 public class displayImage : MonoBehaviour
 {
-    public RawImage display; // Drag your UI RawImage here in the inspector
+    public RawImage display;
+    private PoseLandmarker poseLandmarker;
+    private PoseLandmarkerOptions PoseLandmarkerOptions;
+    private BaseOptions BaseOptions;
+    
+    
+    private void Start()
+    {
+        
+        var modelPath = Path.Combine(Application.streamingAssetsPath, "pose_landmarker_full.task");
+        
+        var options = new PoseLandmarkerOptions()
+        {
+            BaseOptions = new BaseOptions(modelAssetPath: modelPath),
+            RunningMode = RunningMode.IMAGE
+        };
+
+        poseLandmarker = PoseLandmarker.CreateFromOptions(options);
+
+        // Subscribe to output
+        poseLandmarker.OnResult += OnPoseLandmarkResult;
+    }
 
     public void OnClickChooseImage()
     {
@@ -26,26 +52,13 @@ public class displayImage : MonoBehaviour
     private System.Collections.IEnumerator LoadImage(string filePath)
     {
         var fileData = File.ReadAllBytes(filePath);
-        Texture2D tex = new Texture2D(2, 2);
+        Texture2D tex = new Texture2D(0,0);
         tex.LoadImage(fileData);
         display.texture = tex;
+        Texture2D Uploadedtex = display.texture as Texture2D;
+       
         
-        // Max allowed size for the RawImage
-        float maxW = 400f;
-        float maxH = 900f;
 
-        float imgW = tex.width;
-        float imgH = tex.height;
-
-        // Scale factor to fit within max area (keeps aspect ratio)
-        float scale = Mathf.Min(maxW / imgW, maxH / imgH);
-
-        // New size
-        float newW = imgW * scale;
-        float newH = imgH * scale;
-        RectTransform rt = display.rectTransform;
-        rt.sizeDelta = new Vector2(newW, newH);
-        
         yield return null;
     }
 }
