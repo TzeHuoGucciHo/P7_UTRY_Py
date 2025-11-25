@@ -3,36 +3,26 @@ using UnityEngine;
 using UnityEngine.UI;
 using SFB; // Namespace for StandaloneFileBrowser
 using System.IO;
-using NUnit.Framework;
-using UnityEngine.EventSystems;
+using System.Windows.Forms;
 using TMPro;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
-using UnityEngine.SceneManagement;
+using UnityEngine.Rendering;
+using Button = UnityEngine.UI.Button;
+using System.Diagnostics;
 
 public class UIscript : MonoBehaviour
 {
-    public Button[] buttons; 
-    public Color UtryBlue = new Color(2, 2, 2);
-    public Color UtryOrange = new Color(2,2,2);
 
-    public Image explain;
 
-    public void ChangeButtonColor(Button btn)
+    public GameObject explain;
+
+    private void Start()
     {
-        btn.GetComponentInChildren<TMP_Text>().color = UtryOrange;
-        btn.GetComponent<Image>().color = Color.white;
-
-    }
-
-    public void PointerExit(Button btn)
-    {
-        btn.GetComponentInChildren<TMP_Text>().color = Color.white;
-        btn.GetComponent<Image>().color = UtryOrange;
+        explain.SetActive(false);
     }
 
     public void ConfirmSizes()
     {
-        explain.enabled = false;
+        explain.SetActive(true);
     }
       
     
@@ -77,6 +67,30 @@ public class UIscript : MonoBehaviour
         
         yield return null;
     }
+    
+    public void RunPythonCrop(string imagePath)
+    {
+        string pythonExe = @"C:\Path\To\python.exe"; 
+        string scriptPath = @"C:\Path\To\crop_script.py";
 
+        ProcessStartInfo psi = new ProcessStartInfo();
+        psi.FileName = pythonExe;
+        psi.Arguments = $"\"{scriptPath}\" \"{imagePath}\"";
+        psi.CreateNoWindow = true;
+        psi.UseShellExecute = false;
+        psi.RedirectStandardOutput = true;
+        psi.RedirectStandardError = true;
+
+        Process p = Process.Start(psi);
+
+        string output = p.StandardOutput.ReadToEnd();
+        string error = p.StandardError.ReadToEnd();
+
+        p.WaitForExit();
+
+        UnityEngine.Debug.Log("PYTHON OUTPUT:\n" + output);
+        if (!string.IsNullOrEmpty(error))
+            UnityEngine.Debug.LogError("PYTHON ERROR:\n" + error);
+    }
     
 }
