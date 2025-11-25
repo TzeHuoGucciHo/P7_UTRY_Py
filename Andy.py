@@ -422,7 +422,6 @@ def main():
     if cmd_line_gender is not None:
         imputer_input['Gender'] = cmd_line_gender
 
-        # LOGIC UPDATE: Include 2.0 for Non-binary in the debug message
         if cmd_line_gender == 1.0:
             gender_display = "Male"
         elif cmd_line_gender == 0.0:

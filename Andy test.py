@@ -259,15 +259,34 @@ def iterative_imputer(train_df, target_df, model, numeric_cols, max_iterations, 
 # ---------------------------
 # Evaluate Imputation
 # ---------------------------
-def evaluate_imputation(imputed_df, target_df_full, target_df_mask, numeric_cols):
+def evaluate_imputation(imputed_df, target_df_full, target_df_mask, numeric_cols,
+                        tolerances=[1.0, 2.0, 3.0], runtime=None):
     mae_list, rmse_list = [], []
+    tolerance_results = {t: [] for t in tolerances}
+
     for col in numeric_cols:
         masked_indices = target_df_mask[col]
         true_vals = target_df_full.loc[masked_indices, col]
         imputed_vals = imputed_df.loc[masked_indices, col]
+
         mae_list.append(mean_absolute_error(true_vals, imputed_vals))
         rmse_list.append(np.sqrt(mean_squared_error(true_vals, imputed_vals)))
-    return {"MAE": np.mean(mae_list), "RMSE": np.mean(rmse_list)}
+
+        abs_errors = np.abs(true_vals - imputed_vals)
+        for t in tolerances:
+            tolerance_results[t].append(np.mean(abs_errors <= t))
+
+    results = {
+        "MAE": np.mean(mae_list),
+        "RMSE": np.mean(rmse_list),
+    }
+    for t in tolerances:
+        results[f"Pct_within_{t}cm"] = np.mean(tolerance_results[t])
+
+    results["Runtime_sec"] = runtime
+
+    return results
+
 
 # ---------------------------
 # Model Comparison
@@ -276,7 +295,9 @@ def compare_models(models, train_df, target_df, target_df_full, target_df_mask, 
     results = []
     for model in models:
         impute_result = iterative_imputer(train_df, target_df, model, numeric_cols, max_iterations=50)
-        metrics = evaluate_imputation(impute_result["imputed_df"], target_df_full, target_df_mask, numeric_cols)
+        metrics = evaluate_imputation(
+            impute_result["imputed_df"], target_df_full, target_df_mask, numeric_cols, runtime=impute_result["runtime"]
+        )
         results.append({"Model": impute_result["model_name"], "MAE": metrics["MAE"], "RMSE": metrics["RMSE"], "Runtime_sec": impute_result["runtime"]})
     results_df = pd.DataFrame(results)
     results_df['score'] = 1 / results_df['MAE'] / results_df['Runtime_sec']
@@ -287,7 +308,7 @@ def compare_models(models, train_df, target_df, target_df_full, target_df_mask, 
 # ---------------------------
 def cross_validation(train_full, numeric_cols, models, k=5, missing_rate=0.25, max_iterations=50, random_state=42, fixed_missingness=True):
     kf = KFold(n_splits=k, shuffle=True, random_state=random_state)
-    results = {model.__class__.__name__: {'MAE': [], 'RMSE': []} for model in models}
+    results = {model.__class__.__name__: {'MAE': [], 'RMSE': [], 'Runtime_sec': []} for model in models}
     full_masked_df, full_mask_values = simulate_missing_data(train_full, missing_rate=missing_rate, random_state=random_state) if fixed_missingness else (None, None)
 
     for fold_idx, (train_index, val_index) in enumerate(kf.split(train_full), start=1):
@@ -297,9 +318,11 @@ def cross_validation(train_full, numeric_cols, models, k=5, missing_rate=0.25, m
 
         for model in models:
             impute_result = iterative_imputer(train_fold, val_fold_masked, model, numeric_cols, max_iterations)
-            metrics = evaluate_imputation(impute_result['imputed_df'], val_fold_full, val_mask_values, numeric_cols)
+            metrics = evaluate_imputation(impute_result['imputed_df'], val_fold_full, val_mask_values, numeric_cols,
+                                          runtime=impute_result['runtime'])
             results[model.__class__.__name__]['MAE'].append(metrics['MAE'])
             results[model.__class__.__name__]['RMSE'].append(metrics['RMSE'])
+            results[model.__class__.__name__]['Runtime_sec'].append(metrics['Runtime_sec'])
 
     summary = []
     for model_name, metrics_dict in results.items():
@@ -308,7 +331,8 @@ def cross_validation(train_full, numeric_cols, models, k=5, missing_rate=0.25, m
             'MAE_mean': np.mean(metrics_dict['MAE']),
             'MAE_std': np.std(metrics_dict['MAE']),
             'RMSE_mean': np.mean(metrics_dict['RMSE']),
-            'RMSE_std': np.std(metrics_dict['RMSE'])
+            'RMSE_std': np.std(metrics_dict['RMSE']),
+            'Runtime_mean': np.mean(metrics_dict['Runtime_sec'])
         })
     return pd.DataFrame(summary).sort_values('MAE_mean').reset_index(drop=True)
 
@@ -319,21 +343,43 @@ def grid_search(train_full, numeric_cols, model_param_grids, k=5, missing_rate=0
     all_results = []
     for model_name, param_grid in model_param_grids.items():
         for params in ParameterGrid(param_grid):
-            if model_name == "BayesianRidge": model = BayesianRidge(**params)
-            elif model_name == "KNeighborsRegressor": model = KNeighborsRegressor(**params)
-            elif model_name == "RandomForestRegressor": model = RandomForestRegressor(**params, random_state=42, n_jobs=-1)
-            else: raise ValueError(f"Unknown model name: {model_name}")
-            cv_result = cross_validation(train_full, numeric_cols, models=[model], k=k, missing_rate=missing_rate, max_iterations=max_iterations, random_state=random_state)
+            if model_name == "BayesianRidge":
+                model = BayesianRidge(**params)
+            elif model_name == "KNeighborsRegressor":
+                model = KNeighborsRegressor(**params)
+            elif model_name == "RandomForestRegressor":
+                model = RandomForestRegressor(**params, random_state=42, n_jobs=-1)
+            else:
+                raise ValueError(f"Unknown model name: {model_name}")
+            cv_result = cross_validation(
+                train_full,
+                numeric_cols,
+                models=[model],
+                k=k,
+                missing_rate=missing_rate,
+                max_iterations=max_iterations,
+                random_state=random_state
+            )
             cv_result["params"] = [params] * len(cv_result)
             all_results.append(cv_result)
-    return pd.concat(all_results, ignore_index=True).sort_values(by="MAE_mean").reset_index(drop=True)
+    df = pd.concat(all_results, ignore_index=True)
+    df["score"] = 1 / (df["MAE_mean"] * df["Runtime_mean"])
+    return df.sort_values(by="score", ascending=False).reset_index(drop=True)
 
 # ---------------------------
 # Main Workflow
 # ---------------------------
 def main():
-    filepath = r"C:\Uni\MED7\Semester project\P7_UTRY_Py\Mendeley Datasets\Body Measurements _ original_CSV.csv"
+
+    # ---------------------------
+    # Data Loading
+    # ---------------------------
+    filepath = r"Mendeley Datasets/Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
+
+    # ---------------------------
+    # Data Overview & Cleaning
+    # ---------------------------
     df = df.drop_duplicates()
 
     all_num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -344,8 +390,6 @@ def main():
     num_cols = train_df.select_dtypes(include=[np.number]).columns.tolist()
     num_cols_no_gender = [col for col in num_cols if col not in ['Gender']]
     cat_cols = ['Gender']
-    cat_mode_imputer = SimpleImputer(strategy='most_frequent')
-    cat_mode_imputer.fit(train_df[cat_cols])
 
     # data_overview(df, num_cols, cat_cols, title="Full Dataset")
 
@@ -354,10 +398,12 @@ def main():
     print("\nTest Missing values:\n", test_df.isnull().sum())
 
     # ---------------------------
-    # Data Cleaning and Preprocessing
+    # Data Preprocessing
     # ---------------------------
     num_mean_imputer = SimpleImputer(strategy='mean')
     num_mean_imputer.fit(train_df[num_cols_no_gender])
+    cat_mode_imputer = SimpleImputer(strategy='most_frequent')
+    cat_mode_imputer.fit(train_df[cat_cols])
 
     train_df[num_cols_no_gender] = num_mean_imputer.transform(train_df[num_cols_no_gender])
     val_df[num_cols_no_gender] = num_mean_imputer.transform(val_df[num_cols_no_gender])
@@ -382,10 +428,10 @@ def main():
         bins=10,
         threshold=6.0
     )
-    #data_overview(train_df, num_cols, cat_cols, title="Post-outlier-removal train_df")
+    # data_overview(train_df, num_cols, cat_cols, title="Post-outlier-removal train_df")
 
     train_df_trans, val_df_trans, test_df_trans, transformer = transform_and_scale(train_df, val_df, test_df, num_cols_no_gender, standardize=True)
-    #data_overview(train_df_trans, num_cols, cat_cols, title="Post-transformation train_df_trans")
+    # data_overview(train_df_trans, num_cols, cat_cols, title="Post-transformation train_df_trans")
 
     val_masked_df, val_mask_values = simulate_missing_data(val_df_trans, missing_rate=0.25)
     test_masked_df, test_mask_values = simulate_missing_data(test_df_trans, missing_rate=0.25)
@@ -404,8 +450,8 @@ def main():
 
     param_grids = {
         "BayesianRidge": {"alpha_1": [1e-6, 1e-5, 1e-4], "alpha_2": [1e-6, 1e-5, 1e-4], "lambda_1": [1e-6, 1e-5, 1e-4], "lambda_2": [1e-6, 1e-5, 1e-4]},
-        "KNeighborsRegressor": {"n_neighbors": [3, 5, 7, 9], "weights": ["uniform", "distance"]},
-        "RandomForestRegressor": {"n_estimators": [50, 100], "max_depth": [None, 10, 20], "min_samples_split": [2, 5]}
+        "KNeighborsRegressor": {"n_neighbors": [3, 5, 7, 9, 11, 13], "weights": ["uniform", "distance"]},
+        "RandomForestRegressor": {"n_estimators": [50, 100, 150], "max_depth": [None, 10, 20, 30], "min_samples_split": [2, 5]}
     }
 
     grid_results = grid_search(train_df_trans, num_cols_no_gender, param_grids, max_iterations=30)
@@ -418,6 +464,27 @@ def main():
     train_val_full = pd.concat([train_df_trans, val_df_trans], ignore_index=True)
     final_imputer = IterativeImputer(estimator=best_model, max_iter=50, random_state=42, initial_strategy='mean')
     final_imputer.fit(train_val_full[num_cols_no_gender])
+
+    final_impute_result = iterative_imputer(
+        train_val_full,
+        test_masked_df,
+        best_model,
+        numeric_cols=num_cols_no_gender,
+        max_iterations=50,
+        verbose=True
+    )
+
+    final_metrics = evaluate_imputation(
+        final_impute_result["imputed_df"],
+        test_df_trans,
+        test_mask_values,
+        num_cols_no_gender,
+        runtime=final_impute_result["runtime"]
+    )
+
+    print("\n===== FINAL MODEL PERFORMANCE =====")
+    for k, v in final_metrics.items():
+        print(f"{k}: {v}")
 
     # ---------------------------
     # Model Deployment
