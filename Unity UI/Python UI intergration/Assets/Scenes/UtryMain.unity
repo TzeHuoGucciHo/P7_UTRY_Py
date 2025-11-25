@@ -2009,6 +2009,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 867378706}
     m_Modifications:
+    - target: {fileID: 515902469302116311, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_text
+      value: Body length (BL)
+      objectReference: {fileID: 0}
+    - target: {fileID: 515902469302116311, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_fontSize
+      value: 18.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 515902469302116311, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 859643063708219818, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_text
+      value: Height
+      objectReference: {fileID: 0}
+    - target: {fileID: 859643063708219818, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_fontSize
+      value: 48.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 859643063708219818, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1085812415166975243, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2089,9 +2113,53 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2741438581242107922, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_Name
+      value: BodyLength
+      objectReference: {fileID: 0}
+    - target: {fileID: 4513048081413758355, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_Name
+      value: Sleeve Length
+      objectReference: {fileID: 0}
+    - target: {fileID: 6513166420872733330, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_Name
+      value: Chest
+      objectReference: {fileID: 0}
     - target: {fileID: 6550850696613518875, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Name
       value: Panel
+      objectReference: {fileID: 0}
+    - target: {fileID: 6550850696613518875, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6743159919951341623, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b022272313024af49be5cc668da900e8, type: 3}
+    - target: {fileID: 7044724361014955696, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_text
+      value: Sleeve length (SL)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7044724361014955696, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_fontSize
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 7044724361014955696, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7944976874334470526, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_text
+      value: Chest (C)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7944976874334470526, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_fontSize
+      value: 32.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7944976874334470526, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
