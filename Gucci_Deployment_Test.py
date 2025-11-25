@@ -3,36 +3,44 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import PowerTransformer
 
-def convert_inches_to_cm(df, numeric_cols):
-    cols_to_convert = [col for col in numeric_cols if col not in ['Age', 'Gender']]
-
-    print(f"\nConverting {len(cols_to_convert)} columns from inches to cm...")
-
-    df[cols_to_convert] = df[cols_to_convert] * 2.54
-
-    return df
-
 # Load saved models and feature names
 imputer = joblib.load("final_imputer.pkl")
 # Use the feature names from the imputer to define the order of columns
 numeric_cols_no_gender = list(imputer.feature_names_in_)
 transformer: PowerTransformer = joblib.load("transformer.pkl")
 
-# --- NEW INPUT DATA (Assumed to be in Inches based on the values) ---
+# --- NEW INPUT DATA (In CM) ---
 data = {
-    "Gender": [1],
-    "Age": [23],
-    "HeadCircumference": [22.9],
-    "ShoulderWidth": [17.7],
-    "ChestWidth": [np.nan],
-    "Belly": [np.nan],
-    "Waist": [42.3],
-    "Hips": [47.6],
-    "ArmLength": [np.nan],
-    "ShoulderToWaist": [np.nan],
-    "WaistToKnee": [np.nan],
+    "Gender": [1.0],
+    "Age": [23.0],
+    "HeadCircumference": [69],
+    "ShoulderWidth": [54],
+    "ChestWidth": [41],
+    "Belly": [117],
+    "Waist": [np.nan],
+    "Hips": [np.nan],
+    "ArmLength": [63],
+    "ShoulderToWaist": [32],
+    "WaistToKnee": [68],
     "LegLength": [np.nan],
-    "TotalHeight": [75.2],
+    "TotalHeight": [190.0]
+}
+
+# In CM
+true_val = {
+    "Gender": 1.0,
+    "Age": 23.0,
+    "HeadCircumference": 69,
+    "ShoulderWidth": 54,
+    "ChestWidth": 41,
+    "Belly": 117,
+    "Waist": 104,
+    "Hips": 122,
+    "ArmLength": 63,
+    "ShoulderToWaist": 32,
+    "WaistToKnee": 68,
+    "LegLength": 88,
+    "TotalHeight": 190.0
 }
 
 def get_missing_mask(df, cols):
@@ -40,10 +48,9 @@ def get_missing_mask(df, cols):
 
 input_df = pd.DataFrame(data)
 
-# --- CRITICAL NEW STEP: CONVERT INPUT DATA TO CM ---
-# We need ALL numeric columns from the input data to pass to the conversion function
+true_val = pd.DataFrame([true_val])
+
 all_numeric_cols = [col for col in input_df.columns if input_df[col].dtype != 'object']
-input_df = convert_inches_to_cm(input_df, all_numeric_cols)
 # ----------------------------------------------------
 
 mask_original = get_missing_mask(input_df, numeric_cols_no_gender)
@@ -60,7 +67,6 @@ imputed_original_scale_df = pd.DataFrame(
 
 final_result_df = input_df.copy()
 for col in numeric_cols_no_gender:
-    # Fill the NaNs from the original *converted* input with the imputed values
     final_result_df.loc[mask_original[col], col] = imputed_original_scale_df[col]
 
 print("--- Input Data with Missing Values (Converted to CM) ---")
@@ -69,9 +75,6 @@ print(input_df.to_string())
 print("\n--- Imputed Data (Only imputed entries are in CM scale) ---")
 print(final_result_df.to_string())
 
-print("\nVerification:")
-for col in numeric_cols_no_gender:
-    if mask_original[col].any():
-        print(f"{col}: {mask_original[col].sum()} missing values found → {final_result_df[col].isna().sum()} missing values remain (0 means success)")
-
+print("\n--- True Val ---")
+print(true_val.to_string())
 
