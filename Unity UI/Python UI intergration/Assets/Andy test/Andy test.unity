@@ -1615,9 +1615,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 169f34166a7097046926789397780b11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIscriptAndy
-  Text: {fileID: 1258990283}
-  Utry: {r: 0.91764706, g: 0.34509805, b: 0.047058824, a: 1}
   selectedFilePath: 
+  buttons: []
+  UtryBlue: {r: 0.007843138, g: 0.007843138, b: 0.007843138, a: 1}
+  UtryOrange: {r: 1, g: 0.64705884, b: 0, a: 1}
+  explain: {fileID: 0}
   displayImage: {fileID: 1181797637}
 --- !u!1 &867378702
 GameObject:
@@ -1632,7 +1634,6 @@ GameObject:
   - component: {fileID: 867378704}
   - component: {fileID: 867378703}
   - component: {fileID: 867378709}
-  - component: {fileID: 867378708}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1733,22 +1734,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &867378708
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 867378702}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 555cc343e6b9a88439b0c99159beea49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::displayNumbers
-  height: {fileID: 1341598596}
-  shoulderWidth: {fileID: 0}
-  waistWidth: {fileID: 0}
-  hipWidth: {fileID: 0}
 --- !u!114 &867378709
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1761,17 +1746,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a629dcdb9460a1a428f535af86c251d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PythonMeasurementProcessor
-  userHeightString: 190
+  userHeightInput: 
+  userAgeInput: 
+  userGenderInput: 
   frontImageLoader: {fileID: 669579375}
   sideImageLoader: {fileID: 1628930585}
-  pythonPath: C:/Users/andre/AppData/Local/Programs/Python/Python312/python.exe
+  pythonPath: C:/Users/andre/miniconda3/envs/py312/python.exe
   script1RootPath: C:/Uni/MED7/Semester project/P7_UTRY_Py/Measurements_Calculation
   script1SrcPath: C:/Uni/MED7/Semester project/P7_UTRY_Py/Measurements_Calculation/body_measure/src
   script1Path: C:/Uni/MED7/Semester project/P7_UTRY_Py/Measurements_Calculation/body_measure/src/body_measure/cli.py
-  script2Path: C:/Uni/MED7/Semester project/P7_UTRY_Py/Andy test.py
+  script2Path: C:/Uni/MED7/Semester project/P7_UTRY_Py/Andy.py
+  sizeChartCsvPath: C:/Uni/MED7/Semester project/P7_UTRY_Py/size_chart.csv
   dataFolderPath: C:/Uni/MED7/Semester project/P7_UTRY_Py/Data
-  script2DataFilePath: C:/Uni/MED7/Semester project/P7_UTRY_Py/Mendeley Datasets/Body
-    Measurements _ original_CSV.csv
 --- !u!1 &1060306514
 GameObject:
   m_ObjectHideFlags: 0
@@ -1847,17 +1833,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1060306514}
   m_CullTransparentMesh: 1
---- !u!114 &1089334462 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4473842900597097855, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
-  m_PrefabInstance: {fileID: 524971769}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1160588594
 GameObject:
   m_ObjectHideFlags: 0
@@ -1977,22 +1952,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 867378706}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -718.58, y: 216.33}
-  m_SizeDelta: {x: 193.88, y: 316.54}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -718.58, y: 216.33002}
+  m_SizeDelta: {x: 193.88, y: -763.45996}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1258990283 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4473842900597097855, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
-  m_PrefabInstance: {fileID: 3607743245774309}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1341598594
 GameObject:
   m_ObjectHideFlags: 0
@@ -2954,9 +2918,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 169f34166a7097046926789397780b11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIscriptAndy
-  Text: {fileID: 1089334462}
-  Utry: {r: 0.91764706, g: 0.34509805, b: 0.047058824, a: 1}
   selectedFilePath: 
+  buttons: []
+  UtryBlue: {r: 0.007843138, g: 0.007843138, b: 0.007843138, a: 1}
+  UtryOrange: {r: 1, g: 0.64705884, b: 0, a: 1}
+  explain: {fileID: 0}
   displayImage: {fileID: 284837320}
 --- !u!1 &1647413414
 GameObject:
