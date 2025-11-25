@@ -12,6 +12,8 @@ using System.Diagnostics;
 public class UIscript : MonoBehaviour
 {
 
+    public string selectedFilePath = "";
+
 
     public GameObject explain;
 
@@ -38,6 +40,7 @@ public class UIscript : MonoBehaviour
 
         if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
         {
+            selectedFilePath = paths[0];
             StartCoroutine(LoadImage(paths[0]));
         }
     }

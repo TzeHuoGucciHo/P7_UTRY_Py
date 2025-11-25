@@ -3,19 +3,37 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.IO;
+using Debug = UnityEngine.Debug;
 
 public class PythonRunner : MonoBehaviour
 {
-    public RawImage imageDisplay;          // Assign in inspector
-    public string pythonExePath;           // Path to python.exe
-    public string scriptPath;              // The python script
+    public RawImage imageDisplay;          // Assign in inspector
+    public string pythonExePath;           // Path to python.exe
+    public string scriptPath;              // The python script
     public string outputImagePath = "cropped_output.png";
+
+    // --- ADDED: This is where the path will be stored, similar to UIscriptAndy's variable.
+    public string selectedFilePath = "";
 
     public void RunPythonScript()
     {
+        // 1. Basic Validation
+        if (string.IsNullOrEmpty(selectedFilePath) || !File.Exists(selectedFilePath))
+        {
+            Debug.LogError("Input file path is empty or file does not exist. Please select an image first.");
+            return;
+        }
+
         ProcessStartInfo psi = new ProcessStartInfo();
-        psi.FileName = pythonExePath;          // example: C:/Python312/python.exe
-        psi.Arguments = "\"" + scriptPath + "\"";
+        psi.FileName = pythonExePath;
+
+        // --- MODIFIED: Pass the input and output file paths as arguments ---
+        // Format: "script.py" "input.png" "output.png"
+        string arguments = $"\"{scriptPath}\" \"{selectedFilePath}\" \"{outputImagePath}\"";
+
+        psi.Arguments = arguments;
+        Debug.Log($"Executing Python: {psi.FileName} {psi.Arguments}");
+
         psi.CreateNoWindow = true;
         psi.UseShellExecute = false;
         psi.RedirectStandardOutput = true;
@@ -24,10 +42,28 @@ public class PythonRunner : MonoBehaviour
         Process process = new Process();
         process.StartInfo = psi;
 
-        process.Start();
-        process.WaitForExit();  // wait until python is done
-        
-        
+        try
+        {
+            process.Start();
+            process.WaitForExit(); // 🛑 WARNING: This line will block Unity.
+
+            // Read output and error after the process closes
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+
+            if (process.ExitCode != 0)
+            {
+                Debug.LogError($"❌ Python Script Failed (Code {process.ExitCode}): {error}");
+                return;
+            }
+
+            Debug.Log($"Python Output: {output}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to start Python process. Error: {e.Message}");
+            return;
+        }
 
         LoadCroppedImage();
     }
@@ -36,22 +72,24 @@ public class PythonRunner : MonoBehaviour
     {
         if (!File.Exists(outputImagePath))
         {
-            
+            Debug.LogError($"Output file not found at: {outputImagePath}");
             return;
         }
 
         byte[] bytes = File.ReadAllBytes(outputImagePath);
         Texture2D tex = new Texture2D(2, 2);
         tex.LoadImage(bytes);
-        
+
         imageDisplay.texture = tex;
         FitRawImageToParent(imageDisplay, tex);
     }
-    
+
     void FitRawImageToParent(RawImage raw, Texture2D tex)
     {
         RectTransform rt = raw.rectTransform;
         RectTransform parent = raw.transform.parent.GetComponent<RectTransform>();
+
+        if (parent == null) return; // Exit if no parent RectTransform
 
         float texW = tex.width;
         float texH = tex.height;
@@ -66,13 +104,13 @@ public class PythonRunner : MonoBehaviour
 
         if (texAspect > parentAspect)
         {
-            // Image is wider relative to parent → width limits size
+            // Fit by width
             finalW = parentW;
             finalH = finalW / texAspect;
         }
         else
         {
-            // Image is taller relative to parent → height limits size
+            // Fit by height
             finalH = parentH;
             finalW = finalH * texAspect;
         }

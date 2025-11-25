@@ -119,6 +119,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &81911222 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3621955292563557706, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+  m_PrefabInstance: {fileID: 8393286427083258082}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &278126280
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,7 +275,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: b1637943ce7a7fe46a363c57d152ad79, type: 3}
+  m_Texture: {fileID: 0}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -509,14 +520,14 @@ PrefabInstance:
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 2080291150}
+      objectReference: {fileID: 2080291146}
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: RunPythonScript
+      value: OnClickChooseImage
       objectReference: {fileID: 0}
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: PythonRunner, Assembly-CSharp
+      value: UIscriptAndy, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 3538489568436620160, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Pivot.x
@@ -596,6 +607,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3538489568436620160, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
@@ -680,7 +695,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5733559618244225884, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2080291150}
+      addedObject: {fileID: 2080291146}
   m_SourcePrefab: {fileID: 100100000, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
 --- !u!1 &619394800
 GameObject:
@@ -897,12 +912,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 867378702}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c9bd7613fcce964790e037134920e55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIscript
-  explain: {fileID: 8823246697090622837}
+  selectedFilePath: 
+  explain: {fileID: 0}
   displayImage: {fileID: 0}
 --- !u!114 &867378710
 MonoBehaviour:
@@ -916,12 +932,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: caa0d0b39a3c205479fb2aaa13a427b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Json
-  jsonFilePath: C:/Users/marku/OneDrive - Aalborg Universitet/Githubs/P7_UTRY_Py/Measurements_Calculation/body_measure/debug_single/Lukas_190cm_results.json
-  chestInput: {fileID: 3225719306636559158}
-  waistInput: {fileID: 6120659645800619675}
-  hipInput: {fileID: 6120659645800619675}
-  thighInput: {fileID: 2840334792794644774}
-  shoulderInput: {fileID: 390698759928126016}
+  heightInput: {fileID: 390698759928126016}
+  chestWidthInput: {fileID: 3225719306636559158}
+  bodyLengthInput: {fileID: 6120659645800619675}
+  sleeveLengthInput: {fileID: 2840334792794644774}
+  recommendedSizeText: {fileID: 81911222}
+  additionalInfoText: {fileID: 2123798783}
 --- !u!114 &867378711
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -934,16 +950,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a629dcdb9460a1a428f535af86c251d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PythonMeasurementProcessor
-  userHeightString: 190.0
-  frontImageLoader: {fileID: 0}
-  sideImageLoader: {fileID: 0}
-  pythonPath: C:\Users\andre\AppData\Local\Programs\Python\Python312\python.exe
+  userHeightInput: 
+  userAgeInput: 
+  userGenderInput: 
+  frontImageLoader: {fileID: 1027756236}
+  sideImageLoader: {fileID: 2080291146}
+  measurementDisplay: {fileID: 867378710}
+  pythonPath: C:/Users/andre/miniconda3/envs/py312/python.exe
   script1RootPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation
   script1SrcPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src
   script1Path: C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src\body_measure\cli.py
-  script2Path: C:\Uni\MED7\Semester project\P7_UTRY_Py\Andy test.py
+  script2Path: C:/Uni/MED7/Semester project/P7_UTRY_Py/Andy.py
+  sizeChartCsvPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\size_chart.csv
   dataFolderPath: Data/
-  script2DataFilePath: C:\PATH\TO\YOUR\Body Measurements _ original_CSV.csv
 --- !u!1 &899974962
 GameObject:
   m_ObjectHideFlags: 0
@@ -1056,13 +1075,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1027756235}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4de15beee9b9de24ebf21a0d7b7ee48d, type: 3}
+  m_Script: {fileID: 11500000, guid: 169f34166a7097046926789397780b11, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Boundingbox
-  imageDisplay: {fileID: 1181797640}
-  pythonExePath: C:\Users\marku\AppData\Local\Programs\Python\Python311\python.exe
-  scriptPath: Assets/Segment_Markus.py
-  outputImagePath: cropped_output.png
+  m_EditorClassIdentifier: Assembly-CSharp::UIscriptAndy
+  Text: {fileID: 0}
+  selectedFilePath: 
+  displayImage: {fileID: 1181797640}
 --- !u!1 &1060306514
 GameObject:
   m_ObjectHideFlags: 0
@@ -1203,7 +1221,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: e0089b505ce124e47aa067753dfb408d, type: 3}
+  m_Texture: {fileID: 0}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1578,7 +1596,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 0a4f9547da9338f45aed118925f52b27, type: 3}
+  m_Texture: {fileID: 0}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1590,7 +1608,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5733559618244225884, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
   m_PrefabInstance: {fileID: 524971769}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2080291150
+--- !u!114 &2080291146
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1599,13 +1617,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 2080291145}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4de15beee9b9de24ebf21a0d7b7ee48d, type: 3}
+  m_Script: {fileID: 11500000, guid: 169f34166a7097046926789397780b11, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Boundingbox
-  imageDisplay: {fileID: 284837323}
-  pythonExePath: C:\Users\marku\AppData\Local\Programs\Python\Python311\python.exe
-  scriptPath: Assets/Segment_Markus.py
-  outputImagePath: cropped_output.png
+  m_EditorClassIdentifier: Assembly-CSharp::UIscriptAndy
+  Text: {fileID: 0}
+  selectedFilePath: 
+  displayImage: {fileID: 284837323}
+--- !u!114 &2123798783 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1764315780188753459, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+  m_PrefabInstance: {fileID: 8393286427083258082}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &3607743245774309
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1640,11 +1668,11 @@ PrefabInstance:
       objectReference: {fileID: 1027756236}
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: RunPythonScript
+      value: OnClickChooseImage
       objectReference: {fileID: 0}
     - target: {fileID: 3004741365250122088, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: Boundingbox, Assembly-CSharp
+      value: UIscriptAndy, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 3538489568436620160, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Pivot.x
@@ -1727,8 +1755,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[1].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
@@ -1737,14 +1769,14 @@ PrefabInstance:
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1027756236}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[1].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 867378709}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: 
+      value: OnClickChooseImage
       objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[1].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
@@ -1752,7 +1784,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: UIscript, Assembly-CSharp
+      value: UIscriptAndy, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[1].callback.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
@@ -1761,14 +1793,14 @@ PrefabInstance:
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
       value: 
-      objectReference: {fileID: 927032084}
+      objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[1].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
       value: 
       objectReference: {fileID: 927032084}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.UI.Button, UnityEngine.UI
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 4196910916842108525, guid: 68b9f79787dbfdd4592314eab01bd0f1, type: 3}
       propertyPath: m_Delegates.Array.data[1].callback.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -1877,7 +1909,15 @@ PrefabInstance:
     - target: {fileID: 4988663043026791835, guid: e43d7ec9838e38a40b8a9b2e26c99ac1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 867378709}
+      objectReference: {fileID: 867378711}
+    - target: {fileID: 4988663043026791835, guid: e43d7ec9838e38a40b8a9b2e26c99ac1, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnProcessButtonClicked
+      objectReference: {fileID: 0}
+    - target: {fileID: 4988663043026791835, guid: e43d7ec9838e38a40b8a9b2e26c99ac1, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: PythonMeasurementProcessor, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 6742604710295619443, guid: e43d7ec9838e38a40b8a9b2e26c99ac1, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2113,9 +2153,19 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1764315780188753459, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_text
+      value: '
+
+'
+      objectReference: {fileID: 0}
     - target: {fileID: 2741438581242107922, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Name
       value: BodyLength
+      objectReference: {fileID: 0}
+    - target: {fileID: 3621955292563557706, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_text
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4513048081413758355, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Name
@@ -2123,7 +2173,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6513166420872733330, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Name
-      value: Chest
+      value: ChestWidth
       objectReference: {fileID: 0}
     - target: {fileID: 6550850696613518875, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Name
@@ -2166,11 +2216,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
---- !u!1 &8823246697090622837 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6550850696613518875, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
-  m_PrefabInstance: {fileID: 8393286427083258082}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

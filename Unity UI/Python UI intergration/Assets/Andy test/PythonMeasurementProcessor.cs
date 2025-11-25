@@ -5,38 +5,53 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text;
 using Debug = UnityEngine.Debug;
+using System;
+using System.Threading;
+
+// NOTE: Ensure the 'MeasurementDisplay' class (or whatever you call the script
+// that displays the Python output) and 'UIscriptAndy' class exist in your Unity project.
+// The 'MeasurementDisplay' script MUST NOW contain the public method:
+// public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string recommendedSizeString)
 
 public class PythonMeasurementProcessor : MonoBehaviour
 {
-    // --- UI/INPUT REFERENCES (Unchanged) ---
+    // --- UI/INPUT REFERENCES ---
     [Header("User Input via Inspector")]
-    public string userHeightString = "190.0";
+    public string userHeightInput = "";
+    public string userAgeInput = "";
+    public string userGenderInput = "";
 
     [Header("UI Image Loaders")]
     public UIscriptAndy frontImageLoader;
     public UIscriptAndy sideImageLoader;
 
-    [Header("Python Configuration")]
-    public string pythonPath = @"C:\Users\andre\AppData\Local\Programs\Python\Python312\python.exe";
+    // --- NEW: Reference to the script that will display the measurements ---
+    [Header("Display Component Reference")]
+    // RENAMED from 'Json' to 'MeasurementDisplay' to avoid C# conflicts
+    public MeasurementDisplay measurementDisplay; // Make sure the MeasurementDisplay script is assigned here in the Inspector!
+    // ----------------------------------------------------------------------
 
-    // 1. PROJECT ROOT: The folder containing 'body_measure' and 'cli.py' relative parent folders.
+    [Header("Python Configuration")]
+    public string pythonPath = @"C:\Users\andre\miniconda3\envs\py312\python.exe";
+
+    // 1. PROJECT ROOT
     public string script1RootPath = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation";
 
-    // 2. PYTHON SEARCH PATH (PYTHONPATH): The folder containing the 'body_measure' package folder.
-    // This is necessary for internal imports like 'from body_measure import measure_v2'.
+    // 2. PYTHON SEARCH PATH
     public string script1SrcPath = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src";
 
-    // 3. SCRIPT PATH: The exact location of the script being executed.
+    // 3. SCRIPT PATH (Not directly used in RunScript1Async, but kept for context)
     public string script1Path = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src\body_measure\cli.py";
 
 
-    public string script2Path = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Andy test.py";
+    [Header("Script 2 Files")]
+    public string script2Path = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Andy.py";
+
+    public string sizeChartCsvPath = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\size_chart.csv";
+
     public string dataFolderPath = "Data/";
 
-    [Header("Script 2 Data File")]
-    public string script2DataFilePath = @"C:\PATH\TO\YOUR\Body Measurements _ original_CSV.csv";
-
-    // --- Data Structures (Unchanged) ---
+    // --- Data Structures ---
     [System.Serializable]
     public class MeasurementData
     {
@@ -45,7 +60,13 @@ public class PythonMeasurementProcessor : MonoBehaviour
         public float? waist_cm;
         public float? hip_cm;
         public float? shoulder_width_cm;
-        public string recommended_size;
+    }
+
+    [System.Serializable]
+    public class JsonDictEntry
+    {
+        public string key;
+        public float value;
     }
 
     [System.Serializable]
@@ -61,27 +82,69 @@ public class PythonMeasurementProcessor : MonoBehaviour
     [System.Serializable]
     public class PythonOutputData
     {
-        // Must match the key names in the Python JSON output
         public string status;
-        public string file_saved;
-        public string path;
+        public string debug_message;
+        public string recommended_size;
+        public string scaled_measurements_json;
+        public string final_measurements_json; // This holds the measurements JSON string
         public PythonRuntimes runtime_ms;
     }
-    // =================================================================================
 
 
+    private string CleanPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        char separator = Path.DirectorySeparatorChar;
+        char altSeparator = Path.AltDirectorySeparatorChar;
+
+        // Check for both Windows (\) and Unix (/) style separators
+        if (path.EndsWith(separator.ToString()) || path.EndsWith(altSeparator.ToString()))
+        {
+            return path.Substring(0, path.Length - 1);
+        }
+
+        return path;
+    }
+
     // =================================================================================
-    // 1. BUTTON WRAPPER (Unchanged)
+    // 2. BUTTON WRAPPER
     // =================================================================================
     public void OnProcessButtonClicked()
     {
-        Debug.Log("Button clicked. Starting data validation...");
-
+        // --- Input Validation (Height, Age, Gender) ---
         float userHeight;
-        if (!float.TryParse(userHeightString, out userHeight))
+        if (!float.TryParse(userHeightInput, out userHeight))
         {
-            Debug.LogError("Validation Error: Please enter a valid numerical height in the Inspector field (e.g., 170.5).");
+            Debug.LogError("Validation Error: Please enter a valid numerical **HEIGHT** in the Inspector field (e.g., 170.5).");
             return;
+        }
+
+        float userAge;
+        if (!float.TryParse(userAgeInput, out userAge))
+        {
+            Debug.LogError("Validation Error: Please enter a valid numerical **AGE** in the Inspector field (e.g., 25).");
+            return;
+        }
+
+        // --- Gender Validation ---
+        float userGender = 0.0f;
+        string gender = userGenderInput.ToLower().Trim();
+
+        if (gender == "male")
+        {
+            userGender = 1.0f;
+        }
+        else if (gender == "female")
+        {
+            userGender = 0.0f;
+        }
+        else if (gender == "non-binary" || gender == "nonbinary")
+        {
+            userGender = 2.0f;
         }
 
         if (frontImageLoader == null || sideImageLoader == null)
@@ -99,136 +162,26 @@ public class PythonMeasurementProcessor : MonoBehaviour
             return;
         }
 
-        MeasurementData knownMeasurements = new MeasurementData()
-        {
-            chest_cm = 103.5f,
-            waist_cm = 77f,
-            hip_cm = 100f
-        };
+        CheckPythonDependencies();
 
-        StartFullProcess(userHeight, frontImagePath, sideImagePath, knownMeasurements);
+        StartFullProcess(userHeight, userAge, userGender, frontImagePath, sideImagePath);
     }
 
-    // =================================================================================
-    // 2. MAIN ASYNC PIPELINE (Unchanged)
-    // =================================================================================
-    public async void StartFullProcess(float userHeight, string frontImagePath, string sideImagePath, MeasurementData knownMeasurements)
+    // --- Dependency Check ---
+    private void CheckPythonDependencies()
     {
-        Debug.Log("Starting Python processing pipeline...");
+        string[] requiredPackages = { "pandas", "joblib" };
+        string baseCommand = $"{pythonPath} -c \"import {requiredPackages[0]}; import {requiredPackages[1]}; print('Dependencies OK')\"";
 
-        // Ensure the data output folder exists
-        string dataFolderFullPath = Path.GetFullPath(dataFolderPath);
-        if (!Directory.Exists(dataFolderFullPath))
-        {
-            Directory.CreateDirectory(dataFolderFullPath);
-        }
-
-        // We use dataFolderFullPath as the debug-dir and out-json output folder
-        string script1JsonOutput = await RunScript1Async(userHeight, frontImagePath, sideImagePath, script1RootPath, dataFolderFullPath);
-
-        if (string.IsNullOrEmpty(script1JsonOutput))
-        {
-            Debug.LogError("Pipeline Error: Script 1 failed to return JSON output. Stopping.");
-            return;
-        }
-
-        string inputForScript2Path = Path.GetFullPath(Path.Combine(dataFolderPath, "input_for_imputation.json")); // Resolve to absolute path
-        File.WriteAllText(inputForScript2Path, script1JsonOutput);
-
-        Debug.Log($"📝 Script 2 input JSON saved to: {inputForScript2Path}"); // Log the absolute path
-
-        string finalJsonOutput = await RunScript2Async(inputForScript2Path);
-
-        if (!string.IsNullOrEmpty(finalJsonOutput))
-        {
-            try
-            {
-                PythonOutputData data = JsonUtility.FromJson<PythonOutputData>(finalJsonOutput);
-
-                Debug.Log($"✅ Processing Complete. File saved to: {data.path}");
-
-                // Log the runtime details
-                Debug.Log("--- RUNTIME STATISTICS ---");
-                Debug.Log($"Setup/Load (ms): {data.runtime_ms.step_1_setup_ms:F1}");
-                Debug.Log($"Imputation (ms): {data.runtime_ms.step_2_impute_ms:F1}");
-                Debug.Log($"Sizing Logic (ms): {data.runtime_ms.step_3_sizing_ms:F1}");
-                Debug.Log($"Export JSON (ms): {data.runtime_ms.step_4_export_ms:F1}");
-                Debug.Log($"TOTAL Runtime (ms): {data.runtime_ms.total_runtime_ms:F1}");
-                Debug.Log("--------------------------");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"JSON Parsing Error: Could not deserialize runtime data. Raw output: {finalJsonOutput}. Error: {e.Message}");
-            }
-        }
-        else
-        {
-            Debug.LogError("Pipeline Error: Script 2 failed to return final JSON output.");
-        }
-    }
-
-    // ----------------------------------------------------------------------
-    // --- Execution Methods ---
-    // ----------------------------------------------------------------------
-
-    // 🚀 RESTORED: Passing script1SrcPath to set PYTHONPATH.
-    private Task<string> RunScript1Async(float heightCm, string frontImgPath, string sideImgPath, string pythonRootPath, string outputDirPath)
-    {
-        return Task.Run(() =>
-        {
-            // *** CRITICAL FIX: Changed --backend deeplabv3 to --backend opencv ***
-            // DeepLabV3 requires PyTorch, which is not installed. Using 'opencv' forces the HOG/GrabCut fallback.
-            string arguments = $"\"{script1Path}\" " +
-                               $"--front \"{frontImgPath}\" " +
-                               $"--side \"{sideImgPath}\" " +
-                               $"--height-cm {heightCm} " +
-                               $"--backend opencv " +
-                               $"--device cpu " +
-                               $"--debug-dir \"{outputDirPath}\" " +
-                               $"--save-masks " +
-                               $"--out-json \"{outputDirPath}\\output_measurements.json\"";
-
-            // Pass the source path to set PYTHONPATH so internal imports resolve.
-            return ExecutePythonProcess(arguments, Path.GetFileName(script1Path), pythonRootPath, script1SrcPath);
-        });
-    }
-
-    private Task<string> RunScript2Async(string inputFilePath)
-    {
-        return Task.Run(() =>
-        {
-            string arguments = $"\"{script2Path}\" \"{inputFilePath}\" \"{script2DataFilePath}\"";
-            return ExecutePythonProcess(arguments, Path.GetFileName(script2Path), Path.GetDirectoryName(script2Path), null);
-        });
-    }
-
-    private string ExecutePythonProcess(string arguments, string scriptIdentifier, string workingDirectory, string pythonSrcPath)
-    {
         ProcessStartInfo start = new ProcessStartInfo
         {
-            FileName = pythonPath,
-            Arguments = arguments,
-            WorkingDirectory = workingDirectory, // The folder containing the 'cli.py' file (or the root if cli.py calls modules)
+            FileName = "cmd.exe",
+            Arguments = $"/C {baseCommand}",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            CreateNoWindow = true,
-
-            // C# side encoding
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
+            CreateNoWindow = true
         };
-
-        // 💡 CRITICAL FIX: Set PYTHONPATH if a source path is provided.
-        if (!string.IsNullOrEmpty(pythonSrcPath))
-        {
-            // This tells the Python interpreter where to look for the 'body_measure' package.
-            start.EnvironmentVariables["PYTHONPATH"] = pythonSrcPath;
-            Debug.Log($"Setting PYTHONPATH to: {pythonSrcPath}");
-        }
-
-        // Force Python to use UTF-8 for its output streams.
-        start.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
 
         try
         {
@@ -236,19 +189,248 @@ public class PythonMeasurementProcessor : MonoBehaviour
             {
                 string output = process.StandardOutput.ReadToEnd();
                 string error = process.StandardError.ReadToEnd();
+                process.WaitForExit(5000);
 
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
+                if (process.ExitCode != 0 || !output.Contains("Dependencies OK"))
                 {
-                    Debug.LogError($"❌ Python Script '{scriptIdentifier}' Failed (Code {process.ExitCode}): {error}");
-                    Debug.LogError($"Executed command: {pythonPath} {arguments}");
-                    Debug.LogError($"Working Directory: {workingDirectory}");
-                    return null;
+                    Debug.LogError($"PYTHON ENVIRONMENT WARNING: Kunne ikke importere 'pandas' eller 'joblib' i din Python-omgivelse ({Path.GetDirectoryName(pythonPath)}). Fejl: {error}");
+                    Debug.LogError("Dette er sandsynligvis årsagen til Code 1-fejlen. Kør: 'pip install pandas joblib' i din py312 conda-omgivelse.");
+                }
+                else
+                {
+                    Debug.Log("✅ Python afhængigheder (Pandas, Joblib) er installeret i din conda-omgivelse.");
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"❌ Fejl ved check af Python-afhængigheder: {e.Message}");
+        }
+    }
+
+
+    // =================================================================================
+    // 3. MAIN ASYNC PIPELINE
+    // =================================================================================
+    public async void StartFullProcess(float userHeight, float userAge, float userGender, string frontImagePath, string sideImagePath)
+    {
+        Debug.Log("Starting Python processing pipeline...");
+
+        string dataFolderFullPath = Path.GetFullPath(dataFolderPath);
+        if (!Directory.Exists(dataFolderFullPath))
+        {
+            Directory.CreateDirectory(dataFolderFullPath);
+        }
+
+        // --- TRIN 1: KØR SCRIPT 1 (Measurement Calculation) ---
+        Debug.Log("Trin 1/2: Kører Script 1 for måling...");
+
+        System.Diagnostics.Stopwatch script1Timer = new System.Diagnostics.Stopwatch();
+        script1Timer.Start();
+
+        string script1JsonOutput = await RunScript1Async(userHeight, frontImagePath, sideImagePath, script1RootPath, dataFolderFullPath);
+
+        script1Timer.Stop();
+        float script1TotalRuntimeMS = (float)script1Timer.Elapsed.TotalMilliseconds;
+        float script1TotalRuntimeS = script1TotalRuntimeMS / 1000.0f;
+
+        Debug.Log($"✅ Script 1 (Image Measurement) Total Runtime: {script1TotalRuntimeMS:F1} ms ({script1TotalRuntimeS:F3} s)");
+
+        if (string.IsNullOrEmpty(script1JsonOutput))
+        {
+            Debug.LogError("Pipeline Error: Script 1 failed to return JSON output. Stopping.");
+            return;
+        }
+
+        string inputForScript2Path = Path.GetFullPath(Path.Combine(dataFolderPath, "input_for_imputation.json"));
+        File.WriteAllText(inputForScript2Path, script1JsonOutput);
+        Debug.Log($"📝 JSON Output fra Script 1 gemt som input til Script 2: {inputForScript2Path}");
+
+
+        // --- TRIN 2: KØR SCRIPT 2 (Imputation & Sizing) ---
+        Debug.Log("Trin 2/2: Kører Script 2 for imputation og størrelse...");
+
+        string finalJsonOutput = await RunScript2Async(inputForScript2Path, userHeight, userAge, userGender);
+
+        if (!string.IsNullOrEmpty(finalJsonOutput))
+        {
+            try
+            {
+                PythonOutputData data = JsonUtility.FromJson<PythonOutputData>(finalJsonOutput);
+
+                if (data.status == "error")
+                {
+                    string errorMessage = data.recommended_size ?? "Unknown error in Python.";
+                    string rawErrorData = data.final_measurements_json ?? "No raw data.";
+                    Debug.LogError($"❌ Python Script 2 ({Path.GetFileName(script2Path)}) returnerede fejl (Status=error): {errorMessage}. Rå fejl-data: {rawErrorData}");
+                    return;
                 }
 
-                Debug.Log($"Python Script '{scriptIdentifier}' Success. (Output length: {output.Length})");
-                return output.Trim();
+                Debug.Log($"✅ BEHANDLING FULDFØRT!");
+                Debug.Log($"📝 Python Debug Info: {data.debug_message}");
+                Debug.Log($"📏 Anbefalet størrelse: **{data.recommended_size}**");
+                Debug.Log($"Imputerede mål (JSON String): {data.final_measurements_json}");
+
+                // --- FIX: Pass the final measurement JSON string AND the recommended size string ---
+                if (measurementDisplay != null && !string.IsNullOrEmpty(data.final_measurements_json))
+                {
+                    // You must ensure MeasurementDisplay.DisplayMeasurementsFromPython is defined as:
+                    // public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string recommendedSizeString)
+                    measurementDisplay.DisplayMeasurementsFromPython(
+                        data.final_measurements_json, // Argument 1: The measurement data
+                        data.recommended_size         // Argument 2: The recommended size/info string
+                    );
+                    Debug.Log("Measurements and size successfully passed to the display component (MeasurementDisplay script).");
+                }
+                else if (measurementDisplay == null)
+                {
+                    Debug.LogError("Measurement Display component (MeasurementDisplay script) is not assigned in the Inspector!");
+                }
+                else
+                {
+                    Debug.LogError("Python output 'final_measurements_json' was empty. Cannot display results.");
+                }
+                // --------------------------------------------------------------------------
+
+                // --- KØRSELSTID STATISTIK ---
+                Debug.Log("--- TOTAL KØRSELSTID STATISTIK ---");
+                Debug.Log($"Script 1 (Image Measurement) Total: {script1TotalRuntimeMS:F1} ms ({script1TotalRuntimeS:F3} s)");
+
+                Debug.Log($"Script 2 TOTAL Internal: {data.runtime_ms.total_runtime_ms:F1} ms ({(data.runtime_ms.total_runtime_ms / 1000.0f):F6} s)");
+
+                float overallTotalRuntimeMS = script1TotalRuntimeMS + data.runtime_ms.total_runtime_ms;
+                float overallTotalRuntimeS = overallTotalRuntimeMS / 1000.0f;
+
+                Debug.Log($"TOTAL TIME : {overallTotalRuntimeMS:F1} ms ({overallTotalRuntimeS:F3} s)");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"JSON Parsing Error: Kunne ikke deserialisere output fra Script 2. Rå output: {finalJsonOutput}. Fejl: {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Pipeline Error: Script 2 fejlede eller returnerede intet output.");
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // --- Execution Methods
+    // ----------------------------------------------------------------------
+
+    private Task<string> RunScript1Async(float heightCm, string frontImgPath, string sideImgPath, string pythonRootPath, string outputDirPath)
+    {
+        // FIX: Use the CleanPath helper method.
+        string cleanedOutputPath = CleanPath(outputDirPath);
+
+        return Task.Run(() =>
+        {
+            string arguments = $"-m body_measure.cli " +
+                                $"--front \"{frontImgPath}\" " +
+                                $"--side \"{sideImgPath}\" " +
+                                $"--height-cm {heightCm} " +
+                                $"--backend deeplabv3 " +
+                                $"--device cpu " +
+                                $"--debug-dir \"{cleanedOutputPath}\" " + // Using the cleaned path
+                                $" --save-masks";
+
+            return ExecutePythonProcess(arguments, "body_measure.cli", pythonRootPath, script1SrcPath);
+        });
+    }
+
+    private Task<string> RunScript2Async(string inputFilePath, float userHeight, float userAge, float userGender)
+    {
+        // Add GetFullPath here for maximum certainty on the path string integrity
+        string absoluteSizeChartPath = Path.GetFullPath(sizeChartCsvPath);
+
+        return Task.Run(() =>
+        {
+            // Pass userHeight as 3rd arg, userAge as 4th arg, userGender as 5th arg
+            string arguments = $"\"{script2Path}\" \"{inputFilePath}\" \"{absoluteSizeChartPath}\" \"{userHeight}\" \"{userAge}\" \"{userGender}\"";
+
+            string script2WorkingDir = Path.GetDirectoryName(script2Path);
+
+            return ExecutePythonProcess(arguments, Path.GetFileName(script2Path), script2WorkingDir, null);
+        });
+    }
+
+    // ----------------------------------------------------------------------
+    // --- CORE EXECUTION METHOD ---
+    // ----------------------------------------------------------------------
+    private string ExecutePythonProcess(string arguments, string scriptIdentifier, string workingDirectory, string pythonSrcPath)
+    {
+        ProcessStartInfo start = new ProcessStartInfo
+        {
+            FileName = pythonPath,
+            Arguments = arguments,
+            WorkingDirectory = workingDirectory,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
+        };
+
+        if (!string.IsNullOrEmpty(pythonSrcPath))
+        {
+            start.EnvironmentVariables["PYTHONPATH"] = pythonSrcPath;
+            Debug.Log($"Setting PYTHONPATH to: {pythonSrcPath}");
+        }
+
+        start.EnvironmentVariables["KMP_DUPLICATE_LIB_OK"] = "TRUE";
+        start.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
+
+        try
+        {
+            using (Process process = new Process())
+            {
+                process.StartInfo = start;
+                process.EnableRaisingEvents = true;
+
+                StringBuilder output = new StringBuilder();
+                StringBuilder error = new StringBuilder();
+
+                using (ManualResetEvent processExited = new ManualResetEvent(false))
+                {
+                    process.OutputDataReceived += (sender, e) => {
+                        if (e.Data != null) output.AppendLine(e.Data);
+                    };
+
+                    process.ErrorDataReceived += (sender, e) => {
+                        if (e.Data != null) error.AppendLine(e.Data);
+                    };
+
+                    process.Exited += (sender, e) => {
+                        processExited.Set();
+                    };
+
+                    process.Start();
+
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
+                    process.WaitForExit();
+                    processExited.WaitOne();
+
+                    process.CancelOutputRead();
+                    process.CancelErrorRead();
+
+                    string outputString = output.ToString().Trim();
+                    string errorString = error.ToString().Trim();
+                    int exitCode = process.ExitCode;
+
+                    if (exitCode != 0)
+                    {
+                        Debug.LogError($"❌ Python Script '{scriptIdentifier}' Failed (Code {exitCode}): {errorString}");
+                        Debug.LogError($"Executed command: {pythonPath} {arguments}");
+                        Debug.LogError($"Working Directory: {workingDirectory}");
+                        return outputString;
+                    }
+
+                    Debug.Log($"Python Script '{scriptIdentifier}' Success. (Output length: {outputString.Length})");
+                    return outputString;
+                }
             }
         }
         catch (System.Exception e)

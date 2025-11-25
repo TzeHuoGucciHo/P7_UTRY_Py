@@ -1,72 +1,73 @@
 {
-  "pixels_per_cm": 10.526315789473685,
-  "backend_front": "opencv",
-  "backend_side": "opencv",
+  "pixels_per_cm": 11.976047904191617,
+  "backend_front": "deeplabv3",
+  "backend_side": "deeplabv3",
   "rows_px": {
-    "chest": 565,
-    "waist": 754,
-    "hip": 1038,
-    "shoulder": 402,
-    "crotch": 1238,
-    "thigh": 1398
+    "shoulder": 531,
+    "hip": 958,
+    "crotch": 1279,
+    "waist": 793,
+    "chest": 719,
+    "thigh": 1478
   },
   "widths_px_front": {
-    "chest": 822,
-    "waist": 678,
-    "hip": 722,
-    "shoulder": 1003,
-    "thigh": 0
+    "chest": 512,
+    "waist": 375,
+    "hip": 556,
+    "shoulder": 542,
+    "thigh": 256
   },
   "widths_px_side": {
-    "chest": 438,
-    "waist": 472,
-    "hip": 690,
-    "thigh": 879
+    "chest": 232,
+    "waist": 196,
+    "hip": 199,
+    "thigh": 122
   },
   "semiaxes_cm": {
     "chest": [
-      39.044999999999995,
-      20.805
+      21.376,
+      9.686
     ],
     "waist": [
-      32.205,
-      22.419999999999998
+      15.65625,
+      8.183
     ],
     "hip": [
-      34.294999999999995,
-      32.775
+      23.213,
+      8.30825
     ],
     "thigh": [
-      0.0,
-      41.7525
+      10.688,
+      5.0935
     ]
   },
-  "chest_cm": 192.41587918713253,
-  "waist_cm": 172.98890972793433,
-  "hip_cm": 210.73367522034582,
-  "thigh_cm": 0.0,
-  "shoulder_width_cm": 95.285,
-  "inseam_cm": 76.75999999999999,
+  "chest_cm": 101.07062168199901,
+  "waist_cm": 76.74464861986098,
+  "hip_cm": 104.64174964349868,
+  "thigh_cm": 51.149104027892754,
+  "shoulder_width_cm": 45.257,
+  "inseam_cm": 63.5435,
+  "chest_width_cm": 42.752,
   "qa": {
     "normalization": {
       "target_h_px": 2000,
       "crop_margin_ratio": 0.02,
-      "ppc_used_px_per_cm": 10.526315789473685,
+      "ppc_used_px_per_cm": 11.976047904191617,
       "ppc_source": "height",
-      "rows_source": "mask_only",
+      "rows_source": "pose+mask_fast",
       "gender": "male"
     },
     "timing_ms": {
-      "segment": 55019.2,
-      "normalize": 310.5,
-      "precache": 6441.4,
-      "rows": 50.8,
-      "scale": 0.2,
-      "widths": 11.0,
-      "ellipse": 0.5,
-      "lengths": 26.6,
-      "debug": 0.0,
-      "total": 61860.4
+      "segment": 92175.9,
+      "normalize": 258.1,
+      "precache": 4497.5,
+      "rows": 936.2,
+      "scale": 0.0,
+      "widths": 11.6,
+      "ellipse": 0.8,
+      "lengths": 9.2,
+      "debug": 179.2,
+      "total": 98069.3
     }
   }
 }
