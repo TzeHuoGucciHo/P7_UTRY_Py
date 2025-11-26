@@ -92,11 +92,11 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
     # VIGTIGT: Dette er de features, der bruges til afstandsberegningen.
     REQUIRED = ['ChestFrontWidth', 'ShoulderToWaist', 'ArmLength']
 
-    # Definer de dynamiske tolerancer for begge tjek
+    # Standardafvigelsen beregnet i cm for hvert mål til at bestemme størrelsen (standardafvigelsen udregnet fra Kaggle datasæt)
     TOLERANCES = {
-        'ChestFrontWidth': 5.31,
-        'ShoulderToWaist': 5.38,
-        'ArmLength': 5.38
+        'ChestFrontWidth': 13.50,
+        'ShoulderToWaist': 13.66,
+        'ArmLength': 13.66
     }
 
     # check for missing data

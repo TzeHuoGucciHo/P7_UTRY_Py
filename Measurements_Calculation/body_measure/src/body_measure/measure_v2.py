@@ -101,15 +101,16 @@ def _crop_and_resize_to_height(
 
 def _overlay(img_bgr, mask_u8, rows, out_path):
     vis = img_bgr.copy()
-    tint = np.zeros_like(vis); tint[mask_u8 > 0] = (0,255,0)
-    vis = cv2.addWeighted(vis, 1.0, tint, 0.35, 0)
+    #tint = np.zeros_like(vis); tint[mask_u8 > 0] = (0,255,0)
+    #vis = cv2.addWeighted(vis, 1.0, tint, 0.35, 0)
     colors = {"shoulder":(0,255,255), "chest":(0,128,255), "waist":(255,0,255),
               "hip":(255,128,0), "crotch":(180,180,0), "thigh":(0,200,100)}
     h, w = mask_u8.shape[:2]
     for k, y in rows.items():
         y = int(max(0, min(h-1, y)))
         cv2.line(vis, (0,y), (w-1,y), colors.get(k,(255,255,255)), 2, cv2.LINE_AA)
-        cv2.putText(vis, k, (10, max(20,y-10)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, colors.get(k,(255,255,255)), 2, cv2.LINE_AA)
+        cv2.putText(vis, k, (10, max(20, y - 10)), cv2.FONT_HERSHEY_SIMPLEX, 2, colors.get(k, (255, 255, 255)), 3,
+                    cv2.LINE_AA)
     _save(out_path, vis)
 
 # ---------- arm suppression ----------
