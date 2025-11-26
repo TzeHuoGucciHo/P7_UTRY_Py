@@ -12,18 +12,24 @@ public class UIscriptAndy : MonoBehaviour, IPointerClickHandler
 {
     public TextMeshProUGUI Text; // Make sure this is assigned in the Inspector if used!
 
-    [HideInInspector]
+    [HideInInspector]
     public string selectedFilePath = ""; // Stores the path to the selected original file
 
-    public RawImage displayImage; // Drag your UI RawImage here in the inspector
+    public RawImage displayImage; // Drag your UI RawImage here in the inspector
+    public GameObject Panel;
 
-    public void OnPointerClick(PointerEventData eventData)
+    private void Start()
+    {
+        Panel.SetActive(false);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
     {
         EventSystem.current.SetSelectedGameObject(null);
     }
 
-    // --- IMAGE SELECTION ---
-    public void OnClickChooseImage()
+    // --- IMAGE SELECTION ---
+    public void OnClickChooseImage()
     {
         var extensions = new[] {
       new ExtensionFilter("Image Files", "png", "jpg", "jpeg")
@@ -32,11 +38,11 @@ public class UIscriptAndy : MonoBehaviour, IPointerClickHandler
 
         if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
         {
-            // 1. Save the selected path (INPUT path)
-            selectedFilePath = paths[0];
+            // 1. Save the selected path (INPUT path)
+         selectedFilePath = paths[0];
 
-            // 2. Load and display the ORIGINAL image immediately
-            StartCoroutine(LoadAndFitImage(paths[0]));
+         // 2. Load and display the ORIGINAL image immediately
+         StartCoroutine(LoadAndFitImage(paths[0]));
         }
     }
 
@@ -50,13 +56,13 @@ public class UIscriptAndy : MonoBehaviour, IPointerClickHandler
 
         displayImage.texture = tex;
 
-        // Use the fitting logic to size the image
-        FitRawImageToParent(displayImage, tex);
+        // Use the fitting logic to size the image
+        FitRawImageToParent(displayImage, tex);
 
         yield return null;
     }
 
-    void FitRawImageToParent(RawImage raw, Texture2D tex)
+    void FitRawImageToParent(RawImage raw, Texture2D tex)
     {
         RectTransform rt = raw.rectTransform;
         RectTransform parent = raw.transform.parent.GetComponent<RectTransform>();
@@ -76,14 +82,14 @@ public class UIscriptAndy : MonoBehaviour, IPointerClickHandler
 
         if (texAspect > parentAspect)
         {
-            // Fit by width
-            finalW = parentW;
+             // Fit by width
+            finalW = parentW;
             finalH = finalW / texAspect;
         }
         else
         {
-            // Fit by height
-            finalH = parentH;
+             // Fit by height
+            finalH = parentH;
             finalW = finalH * texAspect;
         }
 

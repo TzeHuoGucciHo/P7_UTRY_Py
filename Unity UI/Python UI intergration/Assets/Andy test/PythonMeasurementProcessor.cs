@@ -7,6 +7,8 @@ using System.Text;
 using Debug = UnityEngine.Debug;
 using System;
 using System.Threading;
+using TMPro;
+using UnityEngine.UI;
 
 // NOTE: Ensure the 'MeasurementDisplay' class (or whatever you call the script
 // that displays the Python output) and 'UIscriptAndy' class exist in your Unity project.
@@ -15,11 +17,12 @@ using System.Threading;
 
 public class PythonMeasurementProcessor : MonoBehaviour
 {
+    public UIscriptAndy UIscriptAndy;
     // --- UI/INPUT REFERENCES ---
-    [Header("User Input via Inspector")]
-    public string userHeightInput = "";
-    public string userAgeInput = "";
-    public string userGenderInput = "";
+    //[Header("User Input via Inspector")]
+    public TextMeshProUGUI userHeightInput;
+    public TextMeshProUGUI userAgeInput;
+    public TextMeshProUGUI userGenderInput;
 
     [Header("UI Image Loaders")]
     public UIscriptAndy frontImageLoader;
@@ -115,16 +118,17 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // =================================================================================
     public void OnProcessButtonClicked()
     {
+        UIscriptAndy.Panel.SetActive(true);
         // --- Input Validation (Height, Age, Gender) ---
         float userHeight;
-        if (!float.TryParse(userHeightInput, out userHeight))
+        if (!float.TryParse(userHeightInput.text, out userHeight))
         {
             Debug.LogError("Validation Error: Please enter a valid numerical **HEIGHT** in the Inspector field (e.g., 170.5).");
             return;
         }
 
         float userAge;
-        if (!float.TryParse(userAgeInput, out userAge))
+        if (!float.TryParse(userAgeInput.text, out userAge))
         {
             Debug.LogError("Validation Error: Please enter a valid numerical **AGE** in the Inspector field (e.g., 25).");
             return;
@@ -132,7 +136,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
         // --- Gender Validation ---
         float userGender = 0.0f;
-        string gender = userGenderInput.ToLower().Trim();
+        string gender = userGenderInput.text.ToLower().Trim();
 
         if (gender == "male")
         {
