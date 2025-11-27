@@ -259,8 +259,7 @@ def iterative_imputer(train_df, target_df, model, numeric_cols, max_iterations, 
 # ---------------------------
 # Evaluate Imputation
 # ---------------------------
-def evaluate_imputation(imputed_df, target_df_full, target_df_mask, numeric_cols,
-                        tolerances=[1.0, 2.0, 3.0], runtime=None):
+def evaluate_imputation(imputed_df, target_df_full, target_df_mask, numeric_cols, tolerances=[1.0, 2.0, 3.0], runtime=None):
     mae_list, rmse_list = [], []
     tolerance_results = {t: [] for t in tolerances}
 
@@ -286,7 +285,6 @@ def evaluate_imputation(imputed_df, target_df_full, target_df_mask, numeric_cols
     results["Runtime_sec"] = runtime
 
     return results
-
 
 # ---------------------------
 # Model Comparison
