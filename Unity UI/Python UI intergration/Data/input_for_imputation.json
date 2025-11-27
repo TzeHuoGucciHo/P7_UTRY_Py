@@ -58,16 +58,16 @@
       "gender": "male"
     },
     "timing_ms": {
-      "segment": 92933.1,
-      "normalize": 246.0,
-      "precache": 2669.1,
-      "rows": 1000.5,
+      "segment": 62184.0,
+      "normalize": 225.1,
+      "precache": 3813.9,
+      "rows": 990.6,
       "scale": 0.0,
-      "widths": 11.3,
-      "ellipse": 0.4,
-      "lengths": 10.5,
-      "debug": 135.7,
-      "total": 97008.6
+      "widths": 11.2,
+      "ellipse": 0.3,
+      "lengths": 10.8,
+      "debug": 133.5,
+      "total": 67370.0
     }
   }
 }

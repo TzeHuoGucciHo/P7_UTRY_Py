@@ -1,124 +1,133 @@
 using UnityEngine;
 using TMPro;
 using System;
+using System.IO;       // Needed for File and Path operations
+using UnityEngine.UI;    // Needed for RawImage
 
 // This class name MUST match the type used in PythonMeasurementProcessor.cs
 public class MeasurementDisplay : MonoBehaviour
 {
-    [Header("UI Output Fields (Assign in Inspector)")]
-    // Measurement Input Fields (Kept as InputField for consistency with your measurement display)
-    public TMP_InputField heightInput;
-    public TMP_InputField chestWidthInput;
-    public TMP_InputField bodyLengthInput;
-    public TMP_InputField sleeveLengthInput;
-
     [Header("Size Output Fields (Assign in Inspector)")]
-    // FIX: Changed from TMP_InputField to TMP_Text
-    public TMP_Text recommendedSizeText; // Now a Text component
-    public TMP_Text additionalInfoText; // Now a Text component
+    // FIX: Changed from TMP_InputField to TMP_Text
+    public TMP_Text recommendedSizeText; // Now a Text component
+    public TMP_Text additionalInfoText; // Now a Text component
 
+    [Header("Image Output Field")]
+    // Assign a RawImage component here in the Inspector!
+    public RawImage textureDisplayArea;
 
-    // --- Data structure to match the JSON keys from Python's final_measurements_json ---
-    [Serializable]
-    public class MeasurementsJsonStructure
+    // --- Data Structures (Kept for consistency, you can remove if unused) ---
+    [System.Serializable]
+    public class MeasurementData
     {
-        // CRITICAL FIX: These fields now match the EXACT keys from your Python JSON output.
-        public float TotalHeight;       // Maps to height_cm
-        public float ChestFrontWidth;   // Maps to chest_width_cm
-        public float ShoulderToWaist;   // Maps to body_length_cm (closest metric)
-        public float ArmLength;         // Maps to sleeve_length_cm (closest metric)
-
-        // Include other keys from the JSON to avoid errors, even if unused
-        public float Gender;
-        public float Age;
-        public float HeadCircumference;
-        public float ShoulderWidth;
-        public float ChestCircumference;
-        public float Belly;
-        public float Waist;
-        public float Hips;
-        public float WaistToKnee;
-        public float LegLength;
+        public float? height_cm;
+        public float? chest_cm;
+        public float? waist_cm;
+        public float? hip_cm;
+        public float? shoulder_width_cm;
     }
+    // --------------------------------------------------------------------------
 
-    /// <summary>
-    /// Receives the final measurement JSON string and updates the UI input fields.
-    /// This method is called by PythonMeasurementProcessor.cs.
-    /// </summary>
-    /// <param name="finalMeasurementsJsonString">The JSON string containing the final imputed measurements.</param>
-    /// <param name="recommendedSizeString">The raw string containing the size and comparison info.</param>
-    public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string recommendedSizeString)
+    /// <summary>
+    /// Receives the final measurement JSON string and updates the UI input fields.
+    /// This method is called by PythonMeasurementProcessor.cs.
+    /// NOTE: The signature must be updated in PythonMeasurementProcessor to include 'imagePath'.
+    /// </summary>
+    /// <param name="finalMeasurementsJsonString">The JSON string containing the final imputed measurements.</param>
+    /// <param name="recommendedSizeString">The raw string containing the size and comparison info.</param>
+    /// <param name="imagePath">The full path to the 'front_overlay.png' image.</param>
+    public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string recommendedSizeString, string imagePath)
     {
-        // --- IMPORTANT CHECK (Measurements) ---
-        if (heightInput == null || chestWidthInput == null || bodyLengthInput == null || sleeveLengthInput == null)
-        {
-            Debug.LogError("Display Error: One or more TMP_InputField references are missing. Check assignments.");
-            return;
-        }
 
-        // --- IMPORTANT CHECK (Size Info) ---
-        // Check for TMP_Text references
-        if (recommendedSizeText == null || additionalInfoText == null)
+        // --- IMPORTANT CHECK (Size Info) ---
+        if (recommendedSizeText == null || additionalInfoText == null)
         {
             Debug.LogError("Display Error: One or more TMP_Text references for size output are missing. Check assignments.");
-            // We can continue with measurement display if these are the only issues
         }
 
-        if (string.IsNullOrEmpty(finalMeasurementsJsonString))
+        // --- Handle Recommended Size and Additional Info ---
+        if (!string.IsNullOrEmpty(recommendedSizeString))
         {
-            Debug.LogError("Display Error: Received an empty or null JSON string for measurements.");
-        }
-        else
-        {
-            try
-            {
-                // 1. Deserialize the JSON string into the C# structure
-                MeasurementsJsonStructure data = JsonUtility.FromJson<MeasurementsJsonStructure>(finalMeasurementsJsonString);
-
-                // 2. Update the UI fields, using the values retrieved via the Python key names.
-                // Measurement fields (still InputField)
-                heightInput.text = $"{data.TotalHeight:F1}";
-                chestWidthInput.text = $"{data.ChestFrontWidth:F1}";
-                bodyLengthInput.text = $"{data.ShoulderToWaist:F1}";
-                sleeveLengthInput.text = $"{data.ArmLength:F1}";
-
-                Debug.Log("Successfully parsed JSON and updated all UI measurement fields.");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Display Error: Failed to parse or use JSON data. Exception: {e.Message}");
-                Debug.Log($"Raw JSON received: {finalMeasurementsJsonString}");
-            }
-        }
-
-        // --- Handle Recommended Size and Additional Info ---
-        if (!string.IsNullOrEmpty(recommendedSizeString))
-        {
-            // The format is: "Recommended: XXL\n(Compared to the next best size (XL): ...)"
-            string[] parts = recommendedSizeString.Split(new[] { '\n' }, 2);
+            // The format is: "Recommended: XXL\n(Compared to the next best size (XL): ...)"
+            string[] parts = recommendedSizeString.Split(new[] { '\n' }, 2);
 
             if (recommendedSizeText != null)
             {
-                recommendedSizeText.text = parts[0]; // e.g., "Recommended: XXL"
+                // e.g., "Recommended: XXL"
+                recommendedSizeText.text = parts[0];
             }
 
             if (additionalInfoText != null && parts.Length > 1)
             {
-                // Display the rest of the text
-                string info = parts[1].Trim();
-                // Ensure it's wrapped for consistency, if not already
-                additionalInfoText.text = info.StartsWith("(") ? info : $"({info})";
+                // Display the rest of the text
+                string info = parts[1].Trim();
+
+                // --- FIX APPLIED HERE ---
+                // REMOVE the logic that wraps the string in parentheses.
+                additionalInfoText.text = info;
             }
             else if (additionalInfoText != null)
             {
-                // If there's no second part, display a default message
-                additionalInfoText.text = "No detailed comparison available.";
+                // If there's no second part, display a default message
+                additionalInfoText.text = "No detailed comparison available.";
             }
         }
         else if (recommendedSizeText != null)
         {
             recommendedSizeText.text = "Size N/A";
             if (additionalInfoText != null) additionalInfoText.text = "";
+        }
+
+        // --- NEW: Load and display the Image ---
+        if (textureDisplayArea != null)
+        {
+            Texture2D texture = LoadTextureFromFile(imagePath);
+            if (texture != null)
+            {
+                // Assign the loaded texture to the RawImage component
+                textureDisplayArea.texture = texture;
+                textureDisplayArea.color = Color.white; // Ensure it's not tinted
+                Debug.Log($"Successfully loaded and displayed image: {Path.GetFileName(imagePath)}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Texture Display Area (RawImage) is not assigned in the Inspector!");
+        }
+    }
+
+    /// <summary>
+    /// Loads a texture from a local file path using System.IO.
+    /// </summary>
+    private Texture2D LoadTextureFromFile(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            Debug.LogError($"File not found: {filePath}");
+            return null;
+        }
+
+        try
+        {
+            byte[] fileData = File.ReadAllBytes(filePath);
+            // Texture2D size is a placeholder; LoadImage will resize it.
+            Texture2D texture = new Texture2D(2, 2);
+
+            // Load image data into the texture (reads dimensions/format from the file)
+            if (texture.LoadImage(fileData))
+            {
+                return texture;
+            }
+            else
+            {
+                Debug.LogError($"Could not load image data into Texture2D from file: {filePath}");
+                return null;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error loading texture from file {filePath}: {e.Message}");
+            return null;
         }
     }
 }

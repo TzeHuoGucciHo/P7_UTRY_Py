@@ -10,19 +10,16 @@ using System.Threading;
 using TMPro;
 using UnityEngine.UI;
 
-// NOTE: Ensure the 'MeasurementDisplay' class (or whatever you call the script
-// that displays the Python output) and 'UIscriptAndy' class exist in your Unity project.
-// The 'MeasurementDisplay' script MUST NOW contain the public method:
-// public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string recommendedSizeString)
-
 public class PythonMeasurementProcessor : MonoBehaviour
 {
+    public GameObject loadingBox;
+
     public UIscriptAndy UIscriptAndy;
     // --- UI/INPUT REFERENCES ---
     //[Header("User Input via Inspector")]
-    public TextMeshProUGUI userHeightInput;
-    public TextMeshProUGUI userAgeInput;
-    public TextMeshProUGUI userGenderInput;
+    public TMP_InputField userHeightInput;
+    public TMP_InputField userAgeInput;
+    public TMP_InputField userGenderInput;
 
     [Header("UI Image Loaders")]
     public UIscriptAndy frontImageLoader;
@@ -30,8 +27,8 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
     // --- NEW: Reference to the script that will display the measurements ---
     [Header("Display Component Reference")]
-    // RENAMED from 'Json' to 'MeasurementDisplay' to avoid C# conflicts
-    public MeasurementDisplay measurementDisplay; // Make sure the MeasurementDisplay script is assigned here in the Inspector!
+    // Make sure the MeasurementDisplay script is assigned here in the Inspector!
+    public MeasurementDisplay measurementDisplay;
     // ----------------------------------------------------------------------
 
     [Header("Python Configuration")]
@@ -52,7 +49,8 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
     public string sizeChartCsvPath = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\size_chart.csv";
 
-    public string dataFolderPath = "Data/";
+    // BASE DATA FOLDER: The unique run folders will be created inside this path.
+    public string baseDataFolderPath = "C:\\Uni\\MED7\\Semester project\\P7_UTRY_Py\\Data";
 
     // --- Data Structures ---
     [System.Serializable]
@@ -93,6 +91,11 @@ public class PythonMeasurementProcessor : MonoBehaviour
         public PythonRuntimes runtime_ms;
     }
 
+    void Start()
+    {
+        if (loadingBox != null)
+            loadingBox.SetActive(false);
+    }
 
     private string CleanPath(string path)
     {
@@ -106,9 +109,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
         // Check for both Windows (\) and Unix (/) style separators
         if (path.EndsWith(separator.ToString()) || path.EndsWith(altSeparator.ToString()))
-        {
             return path.Substring(0, path.Length - 1);
-        }
 
         return path;
     }
@@ -118,6 +119,8 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // =================================================================================
     public void OnProcessButtonClicked()
     {
+        loadingBox.gameObject.SetActive(true);
+
         UIscriptAndy.Panel.SetActive(true);
         // --- Input Validation (Height, Age, Gender) ---
         float userHeight;
@@ -166,9 +169,15 @@ public class PythonMeasurementProcessor : MonoBehaviour
             return;
         }
 
+        // --- NEW: Generate Unique Run ID and Folder Path ---
+        string runID = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        string runDataFolderPath = Path.Combine(baseDataFolderPath, runID);
+        // -------------------------------------------------
+
         CheckPythonDependencies();
 
-        StartFullProcess(userHeight, userAge, userGender, frontImagePath, sideImagePath);
+        // Pass the new unique folder path to the main process
+        StartFullProcess(userHeight, userAge, userGender, frontImagePath, sideImagePath, runDataFolderPath);
     }
 
     // --- Dependency Check ---
@@ -214,16 +223,17 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
 
     // =================================================================================
-    // 3. MAIN ASYNC PIPELINE
+    // 3. MAIN ASYNC PIPELINE (UPDATED to accept runDataFolderPath)
     // =================================================================================
-    public async void StartFullProcess(float userHeight, float userAge, float userGender, string frontImagePath, string sideImagePath)
+    public async void StartFullProcess(float userHeight, float userAge, float userGender, string frontImagePath, string sideImagePath, string runDataFolderPath)
     {
-        Debug.Log("Starting Python processing pipeline...");
+        Debug.Log($"Starting Python processing pipeline for Run ID: {Path.GetFileName(runDataFolderPath)}");
 
-        string dataFolderFullPath = Path.GetFullPath(dataFolderPath);
+        string dataFolderFullPath = Path.GetFullPath(runDataFolderPath);
         if (!Directory.Exists(dataFolderFullPath))
         {
             Directory.CreateDirectory(dataFolderFullPath);
+            Debug.Log($"Created unique data folder: {dataFolderFullPath}");
         }
 
         // --- TRIN 1: KØR SCRIPT 1 (Measurement Calculation) ---
@@ -232,6 +242,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         System.Diagnostics.Stopwatch script1Timer = new System.Diagnostics.Stopwatch();
         script1Timer.Start();
 
+        // Pass the unique runDataFolderPath for output
         string script1JsonOutput = await RunScript1Async(userHeight, frontImagePath, sideImagePath, script1RootPath, dataFolderFullPath);
 
         script1Timer.Stop();
@@ -243,10 +254,12 @@ public class PythonMeasurementProcessor : MonoBehaviour
         if (string.IsNullOrEmpty(script1JsonOutput))
         {
             Debug.LogError("Pipeline Error: Script 1 failed to return JSON output. Stopping.");
+            if (loadingBox != null) loadingBox.SetActive(false);
             return;
         }
 
-        string inputForScript2Path = Path.GetFullPath(Path.Combine(dataFolderPath, "input_for_imputation.json"));
+        // Use the runDataFolderPath to save the input file for script 2
+        string inputForScript2Path = Path.GetFullPath(Path.Combine(runDataFolderPath, "input_for_imputation.json"));
         File.WriteAllText(inputForScript2Path, script1JsonOutput);
         Debug.Log($"📝 JSON Output fra Script 1 gemt som input til Script 2: {inputForScript2Path}");
 
@@ -267,24 +280,26 @@ public class PythonMeasurementProcessor : MonoBehaviour
                     string errorMessage = data.recommended_size ?? "Unknown error in Python.";
                     string rawErrorData = data.final_measurements_json ?? "No raw data.";
                     Debug.LogError($"❌ Python Script 2 ({Path.GetFileName(script2Path)}) returnerede fejl (Status=error): {errorMessage}. Rå fejl-data: {rawErrorData}");
+                    if (loadingBox != null) loadingBox.SetActive(false);
                     return;
                 }
 
-                Debug.Log($"✅ BEHANDLING FULDFØRT!");
+                Debug.Log($"👍 BEHANDLING FULDFØRT!");
                 Debug.Log($"📝 Python Debug Info: {data.debug_message}");
                 Debug.Log($"📏 Anbefalet størrelse: **{data.recommended_size}**");
                 Debug.Log($"Imputerede mål (JSON String): {data.final_measurements_json}");
 
-                // --- FIX: Pass the final measurement JSON string AND the recommended size string ---
+                // --- PASS THE NEW IMAGE PATH (using the unique path) ---
+                string frontOverlayPath = Path.GetFullPath(Path.Combine(runDataFolderPath, "front_overlay.png"));
+
                 if (measurementDisplay != null && !string.IsNullOrEmpty(data.final_measurements_json))
                 {
-                    // You must ensure MeasurementDisplay.DisplayMeasurementsFromPython is defined as:
-                    // public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string recommendedSizeString)
                     measurementDisplay.DisplayMeasurementsFromPython(
                         data.final_measurements_json, // Argument 1: The measurement data
-                        data.recommended_size         // Argument 2: The recommended size/info string
+                        data.recommended_size,       // Argument 2: The recommended size/info string
+                        frontOverlayPath             // Argument 3: The path to the overlay image
                     );
-                    Debug.Log("Measurements and size successfully passed to the display component (MeasurementDisplay script).");
+                    Debug.Log("Measurements, size, and image path successfully passed to the display component.");
                 }
                 else if (measurementDisplay == null)
                 {
@@ -294,7 +309,10 @@ public class PythonMeasurementProcessor : MonoBehaviour
                 {
                     Debug.LogError("Python output 'final_measurements_json' was empty. Cannot display results.");
                 }
-                // --------------------------------------------------------------------------
+
+                // --- turn loading box OFF here (right after UI updates) ---
+                if (loadingBox != null)
+                    loadingBox.SetActive(false);
 
                 // --- KØRSELSTID STATISTIK ---
                 Debug.Log("--- TOTAL KØRSELSTID STATISTIK ---");
@@ -310,11 +328,13 @@ public class PythonMeasurementProcessor : MonoBehaviour
             catch (System.Exception e)
             {
                 Debug.LogError($"JSON Parsing Error: Kunne ikke deserialisere output fra Script 2. Rå output: {finalJsonOutput}. Fejl: {e.Message}");
+                if (loadingBox != null) loadingBox.SetActive(false);
             }
         }
         else
         {
             Debug.LogError("Pipeline Error: Script 2 fejlede eller returnerede intet output.");
+            if (loadingBox != null) loadingBox.SetActive(false);
         }
     }
 
@@ -335,7 +355,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
                                 $"--height-cm {heightCm} " +
                                 $"--backend deeplabv3 " +
                                 $"--device cpu " +
-                                $"--debug-dir \"{cleanedOutputPath}\" " + // Using the cleaned path
+                                $"--debug-dir \"{cleanedOutputPath}\" " + // Using the unique run path
                                 $" --save-masks";
 
             return ExecutePythonProcess(arguments, "body_measure.cli", pythonRootPath, script1SrcPath);

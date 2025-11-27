@@ -11,7 +11,7 @@ from typing import Dict, Any, Union, Tuple
 
 TRANSFORMER_PATH = "transformer.pkl"
 IMPUTER_PATH = "final_imputer.pkl"
-OUTPUT_FILE_PATH = "Data/final_output.json"
+OUTPUT_FILE_PATH = "Data/final_output.json"  # NOTE: Unity uses the printed JSON, not this file, for the main result.
 
 # The 14 features used for data alignment (INPUT and OUTPUT dictionary structure).
 ALL_IMPUTER_FEATURES = [
@@ -62,7 +62,7 @@ STATIC_USER_FEATURES = [
 
 STATIC_GENDER_VALUE = 0.0  # Default to Female
 
-# --- NEW: SIZE CHART COLUMN MAPPING ---
+# --- SIZE CHART COLUMN MAPPING ---
 # Maps the size chart column names to simpler names for use in the sizing logic.
 SIZE_CHART_COLUMN_MAPPING = {
     'SIZE': 'SIZE',
@@ -70,7 +70,7 @@ SIZE_CHART_COLUMN_MAPPING = {
     'CHEST (C)': 'CHART_CHEST_WIDTH',
     # Maps BODY LENGTH (BL) to a simplified name
     'BODY LENGTH (BL)': 'CHART_BODY_LENGTH',
-    # Maps SLEEVE LENGTH (SL)': 'CHART_SLEEVE_LENGTH'
+    # Maps SLEEVE LENGTH (SL)': 'CHART_SLEEVE LENGTH'
     'SLEEVE LENGTH (SL)': 'CHART_SLEEVE_LENGTH'
 }
 
@@ -80,7 +80,7 @@ SIZE_TO_INT = {size: i + 1 for i, size in enumerate(SIZE_ORDER)}
 INT_TO_SIZE = {i + 1: size for i, size in enumerate(SIZE_ORDER)}
 
 
-# --- 2. SIZING LOGIC (Opdateret) ---
+# --- 2. SIZING LOGIC ---
 
 def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFrame):
     """
@@ -196,9 +196,22 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
         if best_int is not None and best_int > 1:
             comparison_size = INT_TO_SIZE.get(best_int - 1)
 
+    # If comparison size is still None, use the next size up or down based on index
+    if comparison_size is None:
+        best_int = SIZE_TO_INT.get(best_size)
+        if best_int is not None:
+            # Try next size up
+            next_int = best_int + 1
+            if next_int in INT_TO_SIZE and INT_TO_SIZE.get(next_int) in size_chart['SIZE'].values:
+                comparison_size = INT_TO_SIZE.get(next_int)
+            # Try next size down
+            elif best_int > 1:
+                prev_int = best_int - 1
+                if prev_int in INT_TO_SIZE and INT_TO_SIZE.get(prev_int) in size_chart['SIZE'].values:
+                    comparison_size = INT_TO_SIZE.get(prev_int)
+
     # Initialiser beskeddele
     recommended_size = best_size
-    msg_base = f"Recommended: {best_size}"
     tight_loose_suffix = ""
     comparison_details_line = ""
     suggestion_suffix = ""
@@ -222,7 +235,7 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
         if is_between_sizes:
             if second_best_int < best_int:
                 # Loose fit
-                tight_loose_suffix = " (can have a bit loose fit)"
+                tight_loose_suffix = " (Can have bit loose fit)"
                 suggestion_suffix = f" - choose {second_best_size} for a tighter fit"
             else:
                 # Tight fit (Brugerens ønskede formulering)
@@ -238,37 +251,60 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
         for user_feature, chart_column in CHART_COL_MAP.items():
             user_val = measurements.get(user_feature)
             chart_val_next = comparison_row[chart_column]
-            display_name = DEBUG_DISPLAY_NAMES.get(user_feature, user_feature)
+
+            # Use the feature name directly for the final output as requested
+            display_name = user_feature
 
             # Beregn forskellen: Bruger - Chart (Sammenligningsstørrelse)
             diff_cm = user_val - chart_val_next
 
-            # Sæt præposition baseret på om brugeren er større (+) eller mindre (-) end målet
-            if diff_cm > 0:
-                preposition_txt = "larger than"
-            else:
-                preposition_txt = "smaller than"
+            # Determine the symbol based on the difference:
+            comparison_symbol = ">" if diff_cm >= 0 else "<"
 
-            # Sætter altid absolut værdi for læsbarhed
+            # Use absolute value for the distance, formatted to two decimal places
+            abs_diff = abs(diff_cm)
+
+            # Create the base detail string: e.g., "ChestFrontWidth: > 6.29 cm from S"
+            # Note: We ensure there is NO trailing comma here.
             comparison_details.append(
-                f"{display_name}: {abs(diff_cm):.2f} cm {preposition_txt} {comparison_size}")
+                f"{display_name}: {comparison_symbol} {abs_diff:.2f} cm from {comparison_size}")
 
-        # Føj de nye detaljer til output strengen
+        # --- FINAL FORMATTING FIX FOR LINE BREAKS AND PARENTHESES ---
         if comparison_details:
-            # Sætter detaljerne på en ny linje
-            comparison_details_line = f"\n(Compared to the next best size ({comparison_size}): {'; '.join(comparison_details)})"
+            # Use two newlines to separate each detail line (\n\n) to give the desired spacing
+            details_joined = "\n\n".join(comparison_details)
+
+            # Structure the final output part:
+            # - Starts with \n\n to separate from the fit suffix
+            # - Uses \n after the header to create the desired space before details start
+            comparison_details_line = (
+                f"\n\nCompared with the next best size {comparison_size}:\n\n"
+                f"{details_joined}"
+            )
 
     # 4. Endelig sammensætning af beskeden
-    # Vi samler nu beskeden i den ønskede rækkefølge: base + tight/loose + detaljer + suggestion
-    msg = msg_base + tight_loose_suffix + comparison_details_line + suggestion_suffix
 
-    return msg, recommended_size
+    recommended_size_for_output = best_size
+
+    # Re-assemble the message parts for the final output string:
+    final_message_parts = [f"{best_size}"]
+
+    if tight_loose_suffix:
+        # e.g., " (Can have bit loose fit)"
+        final_message_parts.append(f"{tight_loose_suffix}")
+
+    if comparison_details_line:
+        # The comparison_details_line already contains the full "\n\nCompared with..." string.
+        final_message_parts.append(comparison_details_line)
+
+    # Join the parts to form the final string printed to output
+    msg = "".join(final_message_parts)
+
+    return msg, recommended_size_for_output
 
 
 def main():
-    # Removed t_start = time.perf_counter()
-
-    # Check for basic arguments (Script path, Input JSON, Size Chart CSV)
+    # --- Check for basic arguments ---
     if len(sys.argv) < 3:
         error_output = {"status": "error",
                         "recommended_size": "Argument Error: Missing input_json_path (sys.argv[1]) and size_chart_csv_path (sys.argv[2])"}
@@ -280,7 +316,6 @@ def main():
 
     # --- Read Command Line Arguments from Unity/C# ---
 
-    # Check for User Height passed from Unity as 3rd argument (sys.argv[3])
     cmd_line_height = None
     if len(sys.argv) > 3:
         try:
@@ -290,7 +325,6 @@ def main():
         except ValueError:
             pass
 
-    # Check for User Age passed from Unity as 4th argument (sys.argv[4])
     cmd_line_age = None
     if len(sys.argv) > 4:
         try:
@@ -300,7 +334,6 @@ def main():
         except ValueError:
             pass
 
-    # Check for User Gender passed from Unity as 5th argument (sys.argv[5])
     cmd_line_gender = None
     if len(sys.argv) > 5:
         try:
@@ -319,13 +352,12 @@ def main():
             "recommended_size": f"{step_name} Error: {type(e).__name__}: {e}",
             "scaled_measurements_json": "",
             "final_measurements_json": raw_traceback,
-            # Removed runtime_ms / runtime_s from the error output structure
+            # runtime_ms is not included in error output as the crash happened before timer completion
         }
         print(json.dumps(error_output))
         sys.exit(1)
 
     # --- LOADING AND ERROR HANDLING ---
-    # Removed t_setup_start = time.perf_counter()
     size_chart = pd.DataFrame()
     imputer = None
     transformer = None
@@ -359,7 +391,6 @@ def main():
                 size_chart = pd.read_csv(size_chart_csv_path, sep=';', encoding='utf-8')
 
             # --- RENAME SIZE CHART COLUMNS TO SIMPLER NAMES ---
-            # This makes the sizing logic cleaner and less dependent on specific CSV headers.
             new_columns = {}
             for original_name, simple_name in SIZE_CHART_COLUMN_MAPPING.items():
                 if original_name in size_chart.columns:
@@ -380,8 +411,6 @@ def main():
 
     except Exception as e:
         quick_error_exit(e, "Setup and Loading", traceback.format_exc())
-
-    # Removed t_setup_end = time.perf_counter()
 
     # --- PREPARE INPUT FOR IMPUTER ---
     # 1. Initialize with NaNs, set Gender based on JSON/Default
@@ -442,7 +471,6 @@ def main():
     input_df_aligned = input_df[ALL_IMPUTER_FEATURES]
 
     # --- 3. TRANSFORMATION, IMPUTATION, AND INVERSE-TRANSFORMATION ---
-    # Removed t_impute_start = time.perf_counter()
     scaled_measurements_json_str = ""
     imputed_measurements_json_str = ""
 
@@ -474,9 +502,7 @@ def main():
         for feature in TRANSFORMER_FEATURES:
             imputed_df[feature] = imputed_df_transformed[feature]
 
-        # --------------------------------------------------------------------
         # 8. OVERWRITE IMPUTED VALUES WITH USER INPUT (STATIC VALUES)
-        # --------------------------------------------------------------------
         original_row = input_df_aligned.iloc[0]
 
         overwritten_logs = []
@@ -499,8 +525,6 @@ def main():
 
     except Exception as e:
         quick_error_exit(e, "Transformation/Imputation", traceback.format_exc())
-
-    # Removed t_impute_end = time.perf_counter()
 
     # --- 4. SIZING & OUTPUT ---
     recommended_text, sizing_log = get_recommended_size(imputed_measurements, size_chart)
@@ -531,9 +555,6 @@ def main():
 
     # Use the newly ordered dictionary for the final output string
     imputed_measurements_json_str = json.dumps(ordered_measurements)
-    # Removed t_end = time.perf_counter()
-
-    # Removed runtime_data calculation block
 
     output_data = {
         "status": "success",
@@ -541,11 +562,12 @@ def main():
         "recommended_size": recommended_size,
         "scaled_measurements_json": scaled_measurements_json_str,
         "final_measurements_json": imputed_measurements_json_str,
+        # NOTE: runtime_ms not included here as the main timing is done in C#
     }
 
     final_json_output = json.dumps(output_data, indent=4)
 
-    # File Saving
+    # File Saving (Keep this for debugging if Unity path logic fails)
     try:
         output_dir = os.path.dirname(OUTPUT_FILE_PATH)
         if output_dir and not os.path.exists(output_dir):
@@ -555,7 +577,7 @@ def main():
     except Exception:
         pass
 
-    # Print the final JSON to standard output for the C# script to capture
+    # Print the final JSON to standard output for the C# script to capture (CRITICAL)
     print(json.dumps(output_data))
 
 
@@ -563,5 +585,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(json.dumps({"status": "error", "recommended_size": f"Crash: {str(e)}"}))
+        # Provide traceback on crash for debugging in C# error output
+        tb = traceback.format_exc()
+        print(json.dumps({"status": "error", "recommended_size": f"Crash: {str(e)}", "final_measurements_json": tb}))
         sys.exit(1)

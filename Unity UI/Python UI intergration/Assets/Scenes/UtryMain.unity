@@ -1837,12 +1837,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: caa0d0b39a3c205479fb2aaa13a427b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Json
-  heightInput: {fileID: 0}
-  chestWidthInput: {fileID: 0}
-  bodyLengthInput: {fileID: 0}
-  sleeveLengthInput: {fileID: 0}
   recommendedSizeText: {fileID: 81911222}
   additionalInfoText: {fileID: 2123798783}
+  textureDisplayArea: {fileID: 1975519709}
 --- !u!114 &867378711
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1855,10 +1852,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a629dcdb9460a1a428f535af86c251d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PythonMeasurementProcessor
+  loadingBox: {fileID: 970853342}
   UIscriptAndy: {fileID: 1027756236}
-  userHeightInput: {fileID: 1415264413}
-  userAgeInput: {fileID: 531297084}
-  userGenderInput: {fileID: 189863724}
+  userHeightInput: {fileID: 1743493779}
+  userAgeInput: {fileID: 727268417}
+  userGenderInput: {fileID: 482435025}
   frontImageLoader: {fileID: 1027756236}
   sideImageLoader: {fileID: 2080291146}
   measurementDisplay: {fileID: 867378710}
@@ -1868,7 +1866,7 @@ MonoBehaviour:
   script1Path: C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src\body_measure\cli.py
   script2Path: C:/Uni/MED7/Semester project/P7_UTRY_Py/Andy.py
   sizeChartCsvPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\size_chart.csv
-  dataFolderPath: Data/
+  baseDataFolderPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\Data
 --- !u!1 &899974962
 GameObject:
   m_ObjectHideFlags: 0
@@ -1902,17 +1900,10 @@ RectTransform:
   - {fileID: 1181797639}
   m_Father: {fileID: 867378706}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-<<<<<<< Updated upstream
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -625, y: 14.5}
   m_SizeDelta: {x: 400, y: 800}
-=======
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -697.9899, y: 15}
-  m_SizeDelta: {x: -1520, y: -280}
->>>>>>> Stashed changes
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &899974964
 MonoBehaviour:
@@ -1991,7 +1982,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &970853343
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3515,7 +3506,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: fe3f8326ed5b53a4ca348cddce4010f6, type: 3}
+  m_Texture: {fileID: 0}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -3973,6 +3964,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 276173999911301481, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_VerticalAlignment
+      value: 256
+      objectReference: {fileID: 0}
+    - target: {fileID: 276173999911301481, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
+      propertyPath: m_HorizontalAlignment
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 515902469302116311, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_text
       value: 'Body length
@@ -4133,13 +4132,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1764315780188753459, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_text
-      value: "Sammenligning med n\xE6stbedste st\xF8rrelse (XL):\\n\\n ChestFrontWidth:
-        > 6.29 cm XL-m\xE5let;\\n \\nShoulderToWaist: < 8.13 cm  XL-m\xE5let;\\n\\n
-        ArmLength: < 11.57 cm  XL-m\xE5let"
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1764315780188753459, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_fontSize
-      value: 21.35
+      value: 21
       objectReference: {fileID: 0}
     - target: {fileID: 1764315780188753459, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_lineSpacing
@@ -4147,11 +4144,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1764315780188753459, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_fontSizeBase
-      value: 17.9
+      value: 21
       objectReference: {fileID: 0}
     - target: {fileID: 1764315780188753459, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_enableAutoSizing
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1958172441718997454, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Type
@@ -4203,7 +4200,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3621955292563557706, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_text
-      value: M (Can have bit loose fit)
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 3621955292563557706, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_fontSize
@@ -4433,7 +4430,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154275031221789845, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -246
+      value: -255
       objectReference: {fileID: 0}
     - target: {fileID: 9194044359279702060, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_AnchoredPosition.x
