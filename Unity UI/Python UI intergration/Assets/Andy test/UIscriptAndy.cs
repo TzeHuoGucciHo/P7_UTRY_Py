@@ -8,24 +8,37 @@ using TMPro;
 using System.Collections;
 using Debug = UnityEngine.Debug;
 
+[RequireComponent(typeof(Button))]
 public class UIscriptAndy : MonoBehaviour, IPointerClickHandler
 {
-    public TextMeshProUGUI Text; // Make sure this is assigned in the Inspector if used!
+    public TextMeshProUGUI Text;
 
     [HideInInspector]
     public string selectedFilePath = ""; // Stores the path to the selected original file
 
     public RawImage displayImage; // Drag your UI RawImage here in the inspector
     public GameObject Panel;
-
+    public GameObject AdInfo;
     private void Start()
     {
         Panel.SetActive(false);
+        AdInfo.SetActive(false);
+        
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
         EventSystem.current.SetSelectedGameObject(null);
+    }
+
+    public void Hoverenter()
+    {
+        Text.color = Color.black;
+    }
+
+    public void Hoverexit()
+    {
+        Text.color = Color.white;
     }
 
     // --- IMAGE SELECTION ---

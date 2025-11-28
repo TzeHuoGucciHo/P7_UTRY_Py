@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using Debug = UnityEngine.Debug;
 using System;
+using System.Collections;
 using System.Threading;
 using TMPro;
 using UnityEngine.UI;
@@ -13,6 +14,8 @@ using UnityEngine.UI;
 public class PythonMeasurementProcessor : MonoBehaviour
 {
     public GameObject loadingBox;
+    public GameObject Errorbox;
+    public TextMeshProUGUI ErrorText;
 
     public UIscriptAndy UIscriptAndy;
     // UI/INPUT REFERENCES 
@@ -95,6 +98,13 @@ public class PythonMeasurementProcessor : MonoBehaviour
     {
         if (loadingBox != null)
             loadingBox.SetActive(false);
+        Errorbox.SetActive(false);
+    }
+
+    IEnumerator Error()
+    {
+        yield return new WaitForSeconds(10);
+        Errorbox.SetActive((false));
     }
 
     private string CleanPath(string path)
@@ -158,37 +168,46 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // 2. Button wrapper
     public void OnProcessButtonClicked()
     {
-        loadingBox.gameObject.SetActive(true);
-
-        UIscriptAndy.Panel.SetActive(true);
+        
         // Input Validation (Height, Age, Gender)
         float userHeight;
         if (!float.TryParse(userHeightInput.text, out userHeight))
         {
+            Errorbox.SetActive(true);
+            ErrorText.text = "Validation Error: Please enter a valid numerical **HEIGHT** in the Inspector field (e.g., 170.5).";
             Debug.LogError("Validation Error: Please enter a valid numerical **HEIGHT** in the Inspector field (e.g., 170.5).");
             if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
+            StartCoroutine(Error());
             return;
         }
 
         float userAge;
         if (!float.TryParse(userAgeInput.text, out userAge))
         {
+            Errorbox.SetActive(true);
+            ErrorText.text = "Validation Error: Please enter a valid numerical **AGE** in the Inspector field (e.g., 25).";
             Debug.LogError("Validation Error: Please enter a valid numerical **AGE** in the Inspector field (e.g., 25).");
             if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
+            StartCoroutine(Error());
             return;
         }
-
         // Gender Validation 
         float userGender = 0.0f;
+        if (string.IsNullOrWhiteSpace(userGenderInput.text))
+        {
+            Errorbox.SetActive(true);
+            ErrorText.text = "Validation Error: Please enter a Gender (e.g., Male, Female or Nonbinary).";
+            Debug.LogError("Validation Error: Please enter a Gender (e.g., Male, Female or Nonbinary).");
+            StartCoroutine(Error());
+        }
         string gender = userGenderInput.text.ToLower().Trim();
-
         if (gender == "male")
         {
             userGender = 1.0f;
         }
         else if (gender == "female")
         {
-            userGender = 0.0f;
+            userGender = 0.1f;
         }
         else if (gender == "non-binary" || gender == "nonbinary")
         {
@@ -197,6 +216,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
         if (frontImageLoader == null || sideImageLoader == null)
         {
+            
             Debug.LogError("Reference Error: Front or Side Image Loader is not assigned in the Inspector.");
             if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
             return;
@@ -207,7 +227,10 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
         if (string.IsNullOrEmpty(frontImagePath) || string.IsNullOrEmpty(sideImagePath))
         {
+            Errorbox.SetActive(true);
+            ErrorText.text = "Validation Error: Please select both front and side images first using the UI buttons.";
             Debug.LogError("Validation Error: Please select both front and side images first using the UI buttons.");
+            StartCoroutine(Error());
             if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
             return;
         }
@@ -268,6 +291,9 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // MAIN ASYNC PIPELINE 
     public async void StartFullProcess(float userHeight, float userAge, float userGender, string frontImagePath, string sideImagePath, string runDataFolderPath)
     {
+        loadingBox.gameObject.SetActive(true);
+
+        UIscriptAndy.Panel.SetActive(true);
         Debug.Log($"Starting Python processing pipeline for Run ID: {Path.GetFileName(runDataFolderPath)}");
 
         string dataFolderFullPath = Path.GetFullPath(runDataFolderPath);
