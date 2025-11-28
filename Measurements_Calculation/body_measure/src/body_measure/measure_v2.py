@@ -107,6 +107,9 @@ def _overlay(img_bgr, mask_u8, rows, out_path):
               "hip":(255,128,0), "crotch":(180,180,0), "thigh":(0,200,100)}
     h, w = mask_u8.shape[:2]
     for k, y in rows.items():
+        # Skip 'crotch' and 'thigh' as we only focus on upperbody
+        if k in ["crotch", "thigh"]:
+            continue
         y = int(max(0, min(h-1, y)))
         cv2.line(vis, (0,y), (w-1,y), colors.get(k,(255,255,255)), 2, cv2.LINE_AA)
         cv2.putText(vis, k, (10, max(20, y - 10)), cv2.FONT_HERSHEY_SIMPLEX, 2, colors.get(k, (255, 255, 255)), 3,

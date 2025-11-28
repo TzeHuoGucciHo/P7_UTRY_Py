@@ -15,7 +15,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
     public GameObject loadingBox;
 
     public UIscriptAndy UIscriptAndy;
-    // --- UI/INPUT REFERENCES ---
+    // UI/INPUT REFERENCES 
     //[Header("User Input via Inspector")]
     public TMP_InputField userHeightInput;
     public TMP_InputField userAgeInput;
@@ -25,7 +25,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
     public UIscriptAndy frontImageLoader;
     public UIscriptAndy sideImageLoader;
 
-    // --- NEW: Reference to the script that will display the measurements ---
+    // Reference to the script that will display the measurements
     [Header("Display Component Reference")]
     // Make sure the MeasurementDisplay script is assigned here in the Inspector!
     public MeasurementDisplay measurementDisplay;
@@ -52,7 +52,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // BASE DATA FOLDER: The unique run folders will be created inside this path.
     public string baseDataFolderPath = "C:\\Uni\\MED7\\Semester project\\P7_UTRY_Py\\Data";
 
-    // --- Data Structures ---
+    // Data Structures
     [System.Serializable]
     public class MeasurementData
     {
@@ -114,19 +114,59 @@ public class PythonMeasurementProcessor : MonoBehaviour
         return path;
     }
 
-    // =================================================================================
-    // 2. BUTTON WRAPPER
-    // =================================================================================
+    // Find the next available "Participant XX" folder name
+    private string GetNextParticipantRunFolder()
+    {
+        // Ensure the base folder exists
+        if (!Directory.Exists(baseDataFolderPath))
+        {
+            Debug.LogWarning($"Base data folder does not exist. Creating: {baseDataFolderPath}");
+            Directory.CreateDirectory(baseDataFolderPath);
+            return Path.Combine(baseDataFolderPath, "Participant 1");
+        }
+
+        // Scan for existing Participant folders
+        string[] existingFolders = Directory.GetDirectories(baseDataFolderPath, "Participant *");
+        int maxParticipantNumber = 0;
+
+        // Use a natural language approach to parsing the folder names
+        foreach (string folderPath in existingFolders)
+        {
+            string folderName = Path.GetFileName(folderPath);
+            if (folderName.StartsWith("Participant "))
+            {
+                // Try to extract the number part
+                string numberString = folderName.Substring("Participant ".Length);
+                if (int.TryParse(numberString, out int currentNumber))
+                {
+                    if (currentNumber > maxParticipantNumber)
+                    {
+                        maxParticipantNumber = currentNumber;
+                    }
+                }
+            }
+        }
+
+        // Determine the next number
+        int nextParticipantNumber = maxParticipantNumber + 1;
+
+        // Return the full path for the new folder
+        string runID = $"Participant {nextParticipantNumber}";
+        return Path.Combine(baseDataFolderPath, runID);
+    }
+
+    // 2. Button wrapper
     public void OnProcessButtonClicked()
     {
         loadingBox.gameObject.SetActive(true);
 
         UIscriptAndy.Panel.SetActive(true);
-        // --- Input Validation (Height, Age, Gender) ---
+        // Input Validation (Height, Age, Gender)
         float userHeight;
         if (!float.TryParse(userHeightInput.text, out userHeight))
         {
             Debug.LogError("Validation Error: Please enter a valid numerical **HEIGHT** in the Inspector field (e.g., 170.5).");
+            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
             return;
         }
 
@@ -134,10 +174,11 @@ public class PythonMeasurementProcessor : MonoBehaviour
         if (!float.TryParse(userAgeInput.text, out userAge))
         {
             Debug.LogError("Validation Error: Please enter a valid numerical **AGE** in the Inspector field (e.g., 25).");
+            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
             return;
         }
 
-        // --- Gender Validation ---
+        // Gender Validation 
         float userGender = 0.0f;
         string gender = userGenderInput.text.ToLower().Trim();
 
@@ -157,6 +198,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         if (frontImageLoader == null || sideImageLoader == null)
         {
             Debug.LogError("Reference Error: Front or Side Image Loader is not assigned in the Inspector.");
+            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
             return;
         }
 
@@ -166,12 +208,13 @@ public class PythonMeasurementProcessor : MonoBehaviour
         if (string.IsNullOrEmpty(frontImagePath) || string.IsNullOrEmpty(sideImagePath))
         {
             Debug.LogError("Validation Error: Please select both front and side images first using the UI buttons.");
+            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
             return;
         }
 
-        // --- NEW: Generate Unique Run ID and Folder Path ---
-        string runID = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        string runDataFolderPath = Path.Combine(baseDataFolderPath, runID);
+        // --- UPDATED: Generate Unique Run Folder Path ---
+        // Get the next available participant folder path
+        string runDataFolderPath = GetNextParticipantRunFolder();
         // -------------------------------------------------
 
         CheckPythonDependencies();
@@ -222,9 +265,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
     }
 
 
-    // =================================================================================
-    // 3. MAIN ASYNC PIPELINE (UPDATED to accept runDataFolderPath)
-    // =================================================================================
+    // MAIN ASYNC PIPELINE 
     public async void StartFullProcess(float userHeight, float userAge, float userGender, string frontImagePath, string sideImagePath, string runDataFolderPath)
     {
         Debug.Log($"Starting Python processing pipeline for Run ID: {Path.GetFileName(runDataFolderPath)}");
@@ -267,7 +308,8 @@ public class PythonMeasurementProcessor : MonoBehaviour
         // --- TRIN 2: KØR SCRIPT 2 (Imputation & Sizing) ---
         Debug.Log("Trin 2/2: Kører Script 2 for imputation og størrelse...");
 
-        string finalJsonOutput = await RunScript2Async(inputForScript2Path, userHeight, userAge, userGender);
+        // PASS THE NEW ARGUMENT HERE: runDataFolderPath
+        string finalJsonOutput = await RunScript2Async(inputForScript2Path, userHeight, userAge, userGender, runDataFolderPath);
 
         if (!string.IsNullOrEmpty(finalJsonOutput))
         {
@@ -296,8 +338,8 @@ public class PythonMeasurementProcessor : MonoBehaviour
                 {
                     measurementDisplay.DisplayMeasurementsFromPython(
                         data.final_measurements_json, // Argument 1: The measurement data
-                        data.recommended_size,       // Argument 2: The recommended size/info string
-                        frontOverlayPath             // Argument 3: The path to the overlay image
+                        data.recommended_size,      // Argument 2: The recommended size/info string
+                        frontOverlayPath            // Argument 3: The path to the overlay image
                     );
                     Debug.Log("Measurements, size, and image path successfully passed to the display component.");
                 }
@@ -350,27 +392,27 @@ public class PythonMeasurementProcessor : MonoBehaviour
         return Task.Run(() =>
         {
             string arguments = $"-m body_measure.cli " +
-                                $"--front \"{frontImgPath}\" " +
-                                $"--side \"{sideImgPath}\" " +
-                                $"--height-cm {heightCm} " +
-                                $"--backend deeplabv3 " +
-                                $"--device cpu " +
-                                $"--debug-dir \"{cleanedOutputPath}\" " + // Using the unique run path
-                                $" --save-masks";
+                                  $"--front \"{frontImgPath}\" " +
+                                  $"--side \"{sideImgPath}\" " +
+                                  $"--height-cm {heightCm} " +
+                                  $"--backend deeplabv3 " +
+                                  $"--device cpu " +
+                                  $"--debug-dir \"{cleanedOutputPath}\" " + // Using the unique run path
+                                  $" --save-masks";
 
             return ExecutePythonProcess(arguments, "body_measure.cli", pythonRootPath, script1SrcPath);
         });
     }
 
-    private Task<string> RunScript2Async(string inputFilePath, float userHeight, float userAge, float userGender)
+    private Task<string> RunScript2Async(string inputFilePath, float userHeight, float userAge, float userGender, string runDataFolderPath)
     {
         // Add GetFullPath here for maximum certainty on the path string integrity
         string absoluteSizeChartPath = Path.GetFullPath(sizeChartCsvPath);
 
         return Task.Run(() =>
         {
-            // Pass userHeight as 3rd arg, userAge as 4th arg, userGender as 5th arg
-            string arguments = $"\"{script2Path}\" \"{inputFilePath}\" \"{absoluteSizeChartPath}\" \"{userHeight}\" \"{userAge}\" \"{userGender}\"";
+            // Pass userHeight as 3rd arg, userAge as 4th arg, userGender as 5th arg, outputFolder as 6th arg
+            string arguments = $"\"{script2Path}\" \"{inputFilePath}\" \"{absoluteSizeChartPath}\" \"{userHeight}\" \"{userAge}\" \"{userGender}\" \"{runDataFolderPath}\"";
 
             string script2WorkingDir = Path.GetDirectoryName(script2Path);
 

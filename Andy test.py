@@ -15,9 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import shapiro, probplot
 
-# ---------------------------
-# Data Loading and Splitting
-# ---------------------------
+# Data loading and splitting
 def load_and_clean_data(filepath):
     df = pd.read_csv(filepath)
     df.columns = df.columns.str.strip()
@@ -26,7 +24,7 @@ def load_and_clean_data(filepath):
 def convert_inches_to_cm(df, numeric_cols):
     cols_to_convert = [col for col in numeric_cols if col not in ['Age', 'Gender']]
 
-    print(f"\nConverting {len(cols_to_convert)} columns from inches to cm...")
+    print(f"\nConverting {len(cols_to_convert)} columns from inches to cm")
 
     df[cols_to_convert] = df[cols_to_convert] * 2.54
 
@@ -48,11 +46,9 @@ def split_dataset(df, train_frac=0.7, val_frac=0.15, test_frac=0.15, random_stat
     )
     return train_df, val_df, test_df
 
-# ---------------------------
-# Exploratory Data Analysis (EDA)
-# ---------------------------
+# Exploratory data analysis (EDA)
 def data_overview(df, numeric_cols, cat_cols, title=""):
-    print(f"\n===== {title.upper()} =====\n")
+    print(f"\n{title.upper()}\n")
 
     print("Shape:", df.shape)
     print("\nColumn types:\n", df.dtypes)
@@ -70,9 +66,7 @@ def data_overview(df, numeric_cols, cat_cols, title=""):
 
     num_features = len(numeric_cols)
 
-    # ---------------------------
-    # FIGURE 1: Histograms
-    # ---------------------------
+    # Figure 1: Histograms
     plt.figure(figsize=(12, 4 * num_features))
 
     for i, col in enumerate(numeric_cols, 1):
@@ -96,9 +90,7 @@ def data_overview(df, numeric_cols, cat_cols, title=""):
     plt.suptitle(f"{title} — Histograms", fontsize=18)
     plt.show()
 
-    # ---------------------------
-    # FIGURE 2: Boxplots
-    # ---------------------------
+    # Figure 2: Boxplots
     plt.figure(figsize=(12, 2.5 * num_features))
 
     for i, col in enumerate(numeric_cols, 1):
@@ -111,9 +103,7 @@ def data_overview(df, numeric_cols, cat_cols, title=""):
     plt.suptitle(f"{title} — Boxplots", fontsize=18)
     plt.show()
 
-    # ---------------------------
-    # FIGURE 3: Q-Q Plots
-    # ---------------------------
+    # Figure 3: Q-Q plots
     plt.figure(figsize=(12, 4 * num_features))
 
     for i, col in enumerate(numeric_cols, 1):
@@ -122,12 +112,10 @@ def data_overview(df, numeric_cols, cat_cols, title=""):
         plt.title(f"{col} Q-Q Plot")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.suptitle(f"{title} — Q-Q Plots (Normality Check)", fontsize=18)
+    plt.suptitle(f"{title} — Q-Q plots (Normality check)", fontsize=18)
     plt.show()
 
-    # ---------------------------
-    # FIGURE 4: Correlation Heatmap
-    # ---------------------------
+    # Figure 4: Correlation heatmap
     plt.figure(figsize=(12, 10))
 
     corr = df[numeric_cols].corr()
@@ -144,20 +132,16 @@ def data_overview(df, numeric_cols, cat_cols, title=""):
     )
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.suptitle(f"{title} — Correlation Heatmap", fontsize=18)
+    plt.suptitle(f"{title} — Correlation heatmap", fontsize=18)
     plt.show()
 
-    # ---------------------------
     # Shapiro-Wilk summary
-    # ---------------------------
-    print("\nShapiro-Wilk Normality Test (p > 0.05 means roughly normal):")
+    print("\nShapiro-Wilk normality test (p > 0.05 means roughly normal):")
     for col in numeric_cols:
         stat, p = shapiro(df[col])
         print(f"{col}: p={p:.3f} -> {'Normal-ish' if p > 0.05 else 'Not normal'}")
 
-# ---------------------------
-# Data Preprocessing
-# ---------------------------
+# Data preprocessing
 def remove_outliers_binned_iqr(df, group_col, value_cols, bins=10, threshold=3.0):
 
     df_clean = df.copy()
@@ -166,7 +150,7 @@ def remove_outliers_binned_iqr(df, group_col, value_cols, bins=10, threshold=3.0
 
     df_clean['temp_group_bin'] = pd.cut(df_clean[group_col], bins=bins)
 
-    print(f"\n--- Outlier Detection (Grouped by Binned '{group_col}', Threshold={threshold}) ---")
+    print(f"\nOutlier detection (Grouped by binned '{group_col}', rhreshold={threshold})")
     print(f"Binning strategy: {bins}")
 
     for col in value_cols:
@@ -231,9 +215,7 @@ def simulate_missing_data(df, missing_rate=0.2, random_state=42):
 
     return df_masked, mask
 
-# ---------------------------
-# Iterative Imputer
-# ---------------------------
+# Iterative imputer
 def iterative_imputer(train_df, target_df, model, numeric_cols, max_iterations, verbose=False):
     if verbose:
         print(f"\nImputing with model: {model.__class__.__name__}")
@@ -256,9 +238,7 @@ def iterative_imputer(train_df, target_df, model, numeric_cols, max_iterations, 
         print(f"Imputation complete in {runtime:.2f} seconds.")
     return {"model_name": model.__class__.__name__, "imputed_df": imputed_df, "runtime": runtime}
 
-# ---------------------------
-# Evaluate Imputation
-# ---------------------------
+# Evaluate imputation
 def evaluate_imputation(imputed_df, target_df_full, target_df_mask, numeric_cols,
                         tolerances=[1.0, 2.0, 3.0], runtime=None):
     mae_list, rmse_list = [], []
@@ -287,10 +267,7 @@ def evaluate_imputation(imputed_df, target_df_full, target_df_mask, numeric_cols
 
     return results
 
-
-# ---------------------------
-# Model Comparison
-# ---------------------------
+# Model comparison
 def compare_models(models, train_df, target_df, target_df_full, target_df_mask, numeric_cols):
     results = []
     for model in models:
@@ -303,9 +280,7 @@ def compare_models(models, train_df, target_df, target_df_full, target_df_mask, 
     results_df['score'] = 1 / results_df['MAE'] / results_df['Runtime_sec']
     return results_df.sort_values(by='score', ascending=False).reset_index(drop=True)
 
-# ---------------------------
 # Cross-validation
-# ---------------------------
 def cross_validation(train_full, numeric_cols, models, k=5, missing_rate=0.25, max_iterations=50, random_state=42, fixed_missingness=True):
     kf = KFold(n_splits=k, shuffle=True, random_state=random_state)
     results = {model.__class__.__name__: {'MAE': [], 'RMSE': [], 'Runtime_sec': []} for model in models}
@@ -336,9 +311,8 @@ def cross_validation(train_full, numeric_cols, models, k=5, missing_rate=0.25, m
         })
     return pd.DataFrame(summary).sort_values('MAE_mean').reset_index(drop=True)
 
-# ---------------------------
-# Grid Search
-# ---------------------------
+# Grid search
+
 def grid_search(train_full, numeric_cols, model_param_grids, k=5, missing_rate=0.25, max_iterations=50, random_state=42):
     all_results = []
     for model_name, param_grid in model_param_grids.items():
@@ -366,20 +340,14 @@ def grid_search(train_full, numeric_cols, model_param_grids, k=5, missing_rate=0
     df["score"] = 1 / (df["MAE_mean"] * df["Runtime_mean"])
     return df.sort_values(by="score", ascending=False).reset_index(drop=True)
 
-# ---------------------------
-# Main Workflow
-# ---------------------------
+# Main workflow
 def main():
 
-    # ---------------------------
-    # Data Loading
-    # ---------------------------
+    # Data loading
     filepath = r"Mendeley Datasets/Body Measurements _ original_CSV.csv"
     df = load_and_clean_data(filepath)
 
-    # ---------------------------
-    # Data Overview & Cleaning
-    # ---------------------------
+    # Data overview and cleaning
     df = df.drop_duplicates()
 
     all_num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -397,9 +365,7 @@ def main():
     print("\nVal Missing values:\n", val_df.isnull().sum())
     print("\nTest Missing values:\n", test_df.isnull().sum())
 
-    # ---------------------------
-    # Data Preprocessing
-    # ---------------------------
+    # Data preprocessing
     num_mean_imputer = SimpleImputer(strategy='mean')
     num_mean_imputer.fit(train_df[num_cols_no_gender])
     cat_mode_imputer = SimpleImputer(strategy='most_frequent')
@@ -436,9 +402,7 @@ def main():
     val_masked_df, val_mask_values = simulate_missing_data(val_df_trans, missing_rate=0.25)
     test_masked_df, test_mask_values = simulate_missing_data(test_df_trans, missing_rate=0.25)
 
-    # ---------------------------
-    # Model Comparison and Selection
-    # ---------------------------
+    # Model comparison and selection
     candidates = [
         BayesianRidge(),
         KNeighborsRegressor(n_neighbors=5),
@@ -482,13 +446,10 @@ def main():
         runtime=final_impute_result["runtime"]
     )
 
-    print("\n===== FINAL MODEL PERFORMANCE =====")
+    print("\nFINAL MODEL PERFORMANCE")
     for k, v in final_metrics.items():
         print(f"{k}: {v}")
 
-    # ---------------------------
-    # Model Deployment
-    # ---------------------------
     joblib.dump(transformer, "transformer.pkl")
     joblib.dump(final_imputer, "final_imputer.pkl")
 
