@@ -17,14 +17,6 @@ public class UIscriptAndy : MonoBehaviour, IPointerClickHandler
     public string selectedFilePath = ""; // Stores the path to the selected original file
 
     public RawImage displayImage; // Drag your UI RawImage here in the inspector
-    public GameObject Panel;
-    public GameObject AdInfo;
-    private void Start()
-    {
-        Panel.SetActive(false);
-        AdInfo.SetActive(false);
-        
-    }
 
     public void OnPointerClick(PointerEventData eventData)
     {

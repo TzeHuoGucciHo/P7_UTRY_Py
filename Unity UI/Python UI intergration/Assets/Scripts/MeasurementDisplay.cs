@@ -1,23 +1,27 @@
 using UnityEngine;
 using TMPro;
 using System;
-using System.IO;       // Needed for File and Path operations
-using UnityEngine.UI;    // Needed for RawImage
+using System.IO;
+using UnityEngine.UI;
 
 // This class name MUST match the type used in PythonMeasurementProcessor.cs
 public class MeasurementDisplay : MonoBehaviour
 {
-    [Header("Size Output Fields (Assign in Inspector)")]
-    // FIX: Changed from TMP_InputField to TMP_Text
-    public TMP_Text recommendedSizeText; // Now a Text component
-    public TMP_Text additionalInfoText; // Now a Text component
+    [Header("Main UI Output Fields (Initial View)")]
+    // 1. For "Your size: S"
+    public TMP_Text recommendedSizeText;
+    // 2. For "Additional info: For a looser fit..." (This is the simple line)
+    public TMP_Text simpleInfoText;
 
-    [Header("Image Output Field")]
-    // Assign a RawImage component here in the Inspector!
-    public RawImage textureDisplayArea;
+    [Header("Detailed Pop-up Output Field")]
+    // 3. For the content of the white pop-up box (the detailed comparison lines)
+    public TMP_Text detailedInfoPopupText;
 
-    // --- Data Structures (Kept for consistency, you can remove if unused) ---
-    [System.Serializable]
+    [Header("Image Output Field")]
+    public RawImage textureDisplayArea;
+
+    // --- Data Structures (Kept for consistency) ---
+    [System.Serializable]
     public class MeasurementData
     {
         public float? height_cm;
@@ -26,68 +30,73 @@ public class MeasurementDisplay : MonoBehaviour
         public float? hip_cm;
         public float? shoulder_width_cm;
     }
-    // --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
-    /// <summary>
-    /// Receives the final measurement JSON string and updates the UI input fields.
-    /// This method is called by PythonMeasurementProcessor.cs.
-    /// NOTE: The signature must be updated in PythonMeasurementProcessor to include 'imagePath'.
-    /// </summary>
-    /// <param name="finalMeasurementsJsonString">The JSON string containing the final imputed measurements.</param>
-    /// <param name="recommendedSizeString">The raw string containing the size and comparison info.</param>
-    /// <param name="imagePath">The full path to the 'front_overlay.png' image.</param>
-    public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string recommendedSizeString, string imagePath)
+    /// <summary>
+    /// Receives the final measurement data and updates the UI fields.
+    /// This method now accepts 5 arguments, matching the call from PythonMeasurementProcessor.cs.
+    /// </summary>
+    /// <param name="finalMeasurementsJsonString">The JSON string containing the final imputed measurements.</param>
+    /// <param name="simpleSizeString">The size only (e.g., "M").</param>
+    /// <param name="imagePath">The full path to the 'front_overlay.png' image.</param>
+    /// <param name="simpleFitDescription">The fit suffix and simple suggestion line (e.g., "(Can have bit loose fit)\nNext best size is M").</param>
+    /// <param name="fullDetailedComparison">The comparison lines for the pop-up (e.g., "Compared with the next best size...").</param>
+    public void DisplayMeasurementsFromPython(string finalMeasurementsJsonString, string simpleSizeString, string imagePath, string simpleFitDescription, string fullDetailedComparison)
     {
 
-        // --- IMPORTANT CHECK (Size Info) ---
-        if (recommendedSizeText == null || additionalInfoText == null)
+        // --- IMPORTANT CHECK (References) ---
+        if (recommendedSizeText == null || simpleInfoText == null || detailedInfoPopupText == null)
         {
-            Debug.LogError("Display Error: One or more TMP_Text references for size output are missing. Check assignments.");
+            Debug.LogError("Display Error: One or more required TMP_Text references are missing. Check assignments.");
+            return;
         }
 
-        // --- Handle Recommended Size and Additional Info ---
-        if (!string.IsNullOrEmpty(recommendedSizeString))
+        // 1. Handle Recommended Size (Your size: S)
+        // Ensure the output matches your desired format: "Your size: S"
+        if (!string.IsNullOrEmpty(simpleSizeString))
         {
-            // The format is: "Recommended: XXL\n(Compared to the next best size (XL): ...)"
-            string[] parts = recommendedSizeString.Split(new[] { '\n' }, 2);
-
-            if (recommendedSizeText != null)
-            {
-                // e.g., "Recommended: XXL"
-                recommendedSizeText.text = parts[0];
-            }
-
-            if (additionalInfoText != null && parts.Length > 1)
-            {
-                // Display the rest of the text
-                string info = parts[1].Trim();
-
-                // --- FIX APPLIED HERE ---
-                // REMOVE the logic that wraps the string in parentheses.
-                additionalInfoText.text = info;
-            }
-            else if (additionalInfoText != null)
-            {
-                // If there's no second part, display a default message
-                additionalInfoText.text = "No detailed comparison available.";
-            }
+            recommendedSizeText.text = simpleSizeString;
         }
-        else if (recommendedSizeText != null)
+        else
         {
-            recommendedSizeText.text = "Size N/A";
-            if (additionalInfoText != null) additionalInfoText.text = "";
+            recommendedSizeText.text = "Your size: N/A";
         }
 
-        // --- NEW: Load and display the Image ---
-        if (textureDisplayArea != null)
+
+        // 2. Handle Simple Info (Initial View) 
+        // simpleFitDescription contains: "(Can have bit loose fit)\nNext best size is M"
+        if (!string.IsNullOrEmpty(simpleFitDescription))
+        {
+            // We use this text directly for the simple info field
+            // Note: The "Additional info:" prefix is added here to match your UI image.
+            simpleInfoText.text = simpleFitDescription;
+        }
+        else
+        {
+            simpleInfoText.text = "Additional info: Best fit determined.";
+        }
+
+        // 3. Handle Detailed Comparison (Pop-up View)
+        // fullDetailedComparison contains the full comparison lines (ready for the pop-up)
+        if (!string.IsNullOrEmpty(fullDetailedComparison))
+        {
+            detailedInfoPopupText.text = fullDetailedComparison.Trim();
+        }
+        else
+        {
+            detailedInfoPopupText.text = "No detailed comparison available.";
+        }
+
+
+        // --- Load and display the Image ---
+        if (textureDisplayArea != null)
         {
             Texture2D texture = LoadTextureFromFile(imagePath);
             if (texture != null)
             {
-                // Assign the loaded texture to the RawImage component
-                textureDisplayArea.texture = texture;
-                textureDisplayArea.color = Color.white; // Ensure it's not tinted
-                Debug.Log($"Successfully loaded and displayed image: {Path.GetFileName(imagePath)}");
+                textureDisplayArea.texture = texture;
+                textureDisplayArea.color = Color.white;
+                Debug.Log($"Successfully loaded and displayed image: {Path.GetFileName(imagePath)}");
             }
         }
         else
@@ -96,10 +105,10 @@ public class MeasurementDisplay : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Loads a texture from a local file path using System.IO.
-    /// </summary>
-    private Texture2D LoadTextureFromFile(string filePath)
+    /// <summary>
+    /// Loads a texture from a local file path using System.IO.
+    /// </summary>
+    private Texture2D LoadTextureFromFile(string filePath)
     {
         if (!File.Exists(filePath))
         {
@@ -110,11 +119,9 @@ public class MeasurementDisplay : MonoBehaviour
         try
         {
             byte[] fileData = File.ReadAllBytes(filePath);
-            // Texture2D size is a placeholder; LoadImage will resize it.
-            Texture2D texture = new Texture2D(2, 2);
+            Texture2D texture = new Texture2D(2, 2);
 
-            // Load image data into the texture (reads dimensions/format from the file)
-            if (texture.LoadImage(fileData))
+            if (texture.LoadImage(fileData))
             {
                 return texture;
             }

@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 import traceback
+import time  # <-- NEW: Added for timing
 from typing import Dict, Any, Union, Tuple
 
 # Configuration
@@ -95,7 +96,7 @@ INT_TO_SIZE = {i + 1: size for i, size in enumerate(SIZE_ORDER)}
 #   A small score means the body dimensions are very close to the chart's dimensions for that size.
 # Total Mismatch Score = √((User's ChestWidth - Chart ChestWidth)² + (User's ShoulderToWaist - Chart ShoulderToWaist)² + (User's ArmLength  - Chart ArmLength)²)
 
-def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFrame):
+def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFrame) -> Tuple[str, str, str]:
     # IMPORTANT: These are the features used for the distance calculation.
     REQUIRED = ['ChestFrontWidth', 'ShoulderToWaist', 'ArmLength']
 
@@ -111,7 +112,8 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
     for col in REQUIRED:
         val = measurements.get(col)
         if val is None or (isinstance(val, float) and np.isnan(val)):
-            return "Error", f"Missing measurement: {col}"
+            # Return error for all three required outputs
+            return "Error", f"Missing measurement: {col}", "Error"
 
     # Map imputer features -> size chart columns
     CHART_COL_MAP = {
@@ -159,6 +161,9 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
     distances_sorted = sorted(distances, key=lambda x: x[2])
     best_size, best_int, best_dist = distances_sorted[0]
 
+    # Initialize the new simple info string
+    simple_additional_info = ""
+
     # HANDLING EXTREME WARNING (IF ALL SIZES ARE DISQUALIFIED)
     if best_dist == np.inf:
         warning_details = []
@@ -170,7 +175,6 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
         # Safely get the largest size data
         largest_size_row = size_chart[size_chart['SIZE'] == 'XXL']
         largest_size_row = largest_size_row.iloc[0]
-
 
         for user_feature, chart_column in CHART_COL_MAP.items():
             if user_feature in TOLERANCES:
@@ -186,8 +190,14 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
 
         details_str = " & ".join(warning_details)
 
+        # Simple info for error state
+        simple_additional_info = "WARNING: No standard size fits. Your measurements are too large."
+
         # Return a warning since no size fit
-        return f"ERROR: No size fits. (WARNING: Extreme tight fit - Your measurements are too large. Clothing is likely too small. Measured against largest size 'XXL': {details_str}.)", ""
+        return (
+            f"ERROR: No size fits. (WARNING: Extreme tight fit - Your measurements are too large. Clothing is likely too small. Measured against largest size 'XXL': {details_str}.)",
+            simple_additional_info,
+            "ERROR")
 
     # Sizing message
 
@@ -250,11 +260,16 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
             if second_best_int < best_int:
                 # Loose fit
                 tight_loose_suffix = " (Can have bit loose fit)"
-                suggestion_suffix = f" - choose {second_best_size} for a tighter fit"
+                # This is the desired simple message part
+                simple_additional_info = f"For a tighter fit, consider choosing size {second_best_size}."
             else:
                 # Tight fit
-                tight_loose_suffix = " (can be a bit of a tight fit)"
-                suggestion_suffix = f" - choose {second_best_size} for a looser fit"
+                tight_loose_suffix = " (Can be a bit of a tight fit)"
+                # This is the desired simple message part
+                simple_additional_info = f"For a looser fit, consider choosing size {second_best_size}."
+
+    if not simple_additional_info:
+        simple_additional_info = f"Size {best_size} is the best fit."
 
     # Calculate and add cm distance to the comparison size
     comparison_details = []
@@ -295,7 +310,7 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
     recommended_size_for_output = best_size
 
     # Re-assemble the message parts for the final output string:
-    final_message_parts = [f"{best_size}"]
+    final_message_parts = [f"Recommended: {best_size}"]
 
     if tight_loose_suffix:
         final_message_parts.append(f"{tight_loose_suffix}")
@@ -305,17 +320,33 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
         final_message_parts.append(comparison_details_line)
 
     # Join the parts to form the final string printed to output
-    msg = "".join(final_message_parts)
+    # NOTE: Join with "\n" to match the expected format for splitting in C#
+    msg = "\n".join(final_message_parts)
 
-    return msg, recommended_size_for_output
+    # We now return three values
+    return msg, simple_additional_info, recommended_size_for_output
 
 
 def main():
+    # --- NEW: Timing variables ---
+    start_time = time.time()
+    timing_data = {
+        "step_1_setup_ms": 0.0,
+        "step_2_impute_ms": 0.0,
+        "step_3_sizing_ms": 0.0,
+        "step_4_export_ms": 0.0,
+        "total_runtime_ms": 0.0
+    }
+    # ---------------------------
+
     # Check for basic arguments
     # Arguments expected: [1] input_json_path, [2] size_chart_csv_path, [3] height, [4] age, [5] gender, [6] run_data_folder_path
     if len(sys.argv) < 7:
         error_output = {"status": "error",
-                        "recommended_size": "Argument Error: Missing required arguments. Expected: input_json_path, size_chart_csv_path, height, age, gender, **run_data_folder_path**"}
+                        "recommended_size": "Argument Error: Missing required arguments. Expected: input_json_path, size_chart_csv_path, height, age, gender, **run_data_folder_path**",
+                        # Include the new field in error output
+                        "simple_additional_info": "System error: Missing arguments.",
+                        "runtime_ms": timing_data}  # <-- Include timing in error
         print(json.dumps(error_output))
         sys.exit(1)
 
@@ -361,12 +392,18 @@ def main():
 
     # Helper function for quick error output
     def quick_error_exit(e: Exception, step_name: str, raw_traceback: str = ""):
+        # Calculate total time before exiting
+        timing_data['total_runtime_ms'] = (time.time() - start_time) * 1000.0
+
         error_output = {
             "status": "error",
             "debug_message": f"Error in {step_name}",
             "recommended_size": f"{step_name} Error: {type(e).__name__}: {e}",
             "scaled_measurements_json": "",
             "final_measurements_json": raw_traceback,
+            # Include the new field in error output
+            "simple_additional_info": f"System error during {step_name}.",
+            "runtime_ms": timing_data  # <-- Include timing in error
         }
         print(json.dumps(error_output))
         sys.exit(1)
@@ -378,8 +415,11 @@ def main():
     gender_value = STATIC_GENDER_VALUE  # Default to 0.0 (Female)
     debug_message = ""
     sizing_log = ""
+    # Initialize the new variable
+    simple_additional_info = ""
 
     try:
+        # Step 1: Setup and Loading (Start)
         if not os.path.exists(IMPUTER_PATH):
             raise FileNotFoundError(f"Imputer file not found: {IMPUTER_PATH}")
         if not os.path.exists(TRANSFORMER_PATH):
@@ -414,6 +454,9 @@ def main():
 
         # Ensure that the required simplified columns are present
         required_simple_cols = list(SIZE_CHART_COLUMN_MAPPING.values())
+
+        # Step 1: Setup and Loading (End)
+        timing_data['step_1_setup_ms'] = (time.time() - start_time) * 1000.0
 
     except Exception as e:
         quick_error_exit(e, "Setup and Loading", traceback.format_exc())
@@ -480,7 +523,11 @@ def main():
     scaled_measurements_json_str = ""
     imputed_measurements_json_str = ""
 
+    # Calculate time spent until here
+    step_1_end_time = time.time()
+
     try:
+        # Step 2: Imputation/Transformation (Start)
         # Prepare DataFrames for Transformer (features in TRANSFORMER_FEATURES)
         input_transform_df = input_df_aligned[TRANSFORMER_FEATURES].copy()
 
@@ -522,19 +569,36 @@ def main():
 
         debug_message += f"Used Static Values for: {', '.join(overwritten_logs)}. "
 
-
         # Extract final dictionary (includes all 14 features)
         imputed_measurements = imputed_df[ALL_IMPUTER_FEATURES].iloc[0].to_dict()
         imputed_measurements = {k: float(v) for k, v in imputed_measurements.items() if not pd.isna(v)}
 
+        # Step 2: Imputation/Transformation (End)
+        timing_data['step_2_impute_ms'] = (time.time() - step_1_end_time) * 1000.0
+
     except Exception as e:
         quick_error_exit(e, "Transformation/Imputation", traceback.format_exc())
 
-    # Sizing and output
-    recommended_text, sizing_log = get_recommended_size(imputed_measurements, size_chart)
+    # Calculate time spent until here
+    step_2_end_time = time.time()
 
-    # Send the entire sentence to Unity
-    recommended_size = recommended_text
+    # Sizing and output
+    try:
+        # Step 3: Sizing (Start)
+        # NOTE: Now unpacks three return values
+        recommended_text, simple_additional_info, sizing_log = get_recommended_size(imputed_measurements, size_chart)
+
+        # Send the entire sentence to Unity
+        recommended_size = recommended_text
+
+        # Step 3: Sizing (End)
+        timing_data['step_3_sizing_ms'] = (time.time() - step_2_end_time) * 1000.0
+
+    except Exception as e:
+        quick_error_exit(e, "Sizing Calculation", traceback.format_exc())
+
+    # Calculate time spent until here
+    step_3_end_time = time.time()
 
     # The debug message should not receive the recommended text
     debug_message += ""
@@ -560,12 +624,19 @@ def main():
     # Use the newly ordered dictionary for the final output string
     imputed_measurements_json_str = json.dumps(ordered_measurements)
 
+    # Calculate total time
+    total_time_ms = (time.time() - start_time) * 1000.0
+    timing_data['total_runtime_ms'] = total_time_ms
+    timing_data['step_4_export_ms'] = (time.time() - step_3_end_time) * 1000.0  # Calculate export/finalizing time
+
     output_data = {
         "status": "success",
         "debug_message": debug_message,
-        "recommended_size": recommended_size,
+        "recommended_size": recommended_size,  # Full detailed size string
+        "simple_additional_info": simple_additional_info,  # NEW simple string
         "scaled_measurements_json": scaled_measurements_json_str,
         "final_measurements_json": imputed_measurements_json_str,
+        "runtime_ms": timing_data  # <-- NEW: Include runtime data
     }
 
     final_json_output = json.dumps(output_data, indent=4)
@@ -578,10 +649,22 @@ def main():
     # Print the final JSON to standard output for the C# script to capture
     print(json.dumps(output_data))
 
+
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         tb = traceback.format_exc()
-        print(json.dumps({"status": "error", "recommended_size": f"Crash: {str(e)}", "final_measurements_json": tb}))
+        # Calculate total time for crash exit
+        total_time_ms = (
+                                    time.time() - time.time()) * 1000.0  # Time since start is unknown, but use zero for consistency
+        crash_timing_data = {
+            "step_1_setup_ms": 0.0, "step_2_impute_ms": 0.0, "step_3_sizing_ms": 0.0, "step_4_export_ms": 0.0,
+            "total_runtime_ms": total_time_ms
+        }
+        # Include the new field in error output
+        print(json.dumps({"status": "error", "recommended_size": f"Crash: {str(e)}",
+                          "simple_additional_info": "System error: Python script crashed.",
+                          "final_measurements_json": tb,
+                          "runtime_ms": crash_timing_data}))  # <-- Include timing in crash error
         sys.exit(1)

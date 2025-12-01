@@ -14,8 +14,6 @@ using UnityEngine.UI;
 public class PythonMeasurementProcessor : MonoBehaviour
 {
     public GameObject loadingBox;
-    public GameObject Errorbox;
-    public TextMeshProUGUI ErrorText;
 
     public UIscriptAndy UIscriptAndy;
     // UI/INPUT REFERENCES 
@@ -55,6 +53,13 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // BASE DATA FOLDER: The unique run folders will be created inside this path.
     public string baseDataFolderPath = "C:\\Uni\\MED7\\Semester project\\P7_UTRY_Py\\Data";
 
+    public GameObject Panel;
+    public GameObject frontImageText;
+    public GameObject sideImageText;
+
+    // Private variable for Coroutine management
+    private Coroutine errorCoroutine;
+
     // Data Structures
     [System.Serializable]
     public class MeasurementData
@@ -88,23 +93,36 @@ public class PythonMeasurementProcessor : MonoBehaviour
     {
         public string status;
         public string debug_message;
-        public string recommended_size;
+        public string recommended_size; // Holds the full output string (Size + Suffix + Comparison)
         public string scaled_measurements_json;
         public string final_measurements_json; // This holds the measurements JSON string
         public PythonRuntimes runtime_ms;
+        public string simple_additional_info; // Holds the simple suggestion (e.g., "For a looser fit...")
     }
 
     void Start()
     {
         if (loadingBox != null)
             loadingBox.SetActive(false);
-        Errorbox.SetActive(false);
+        //Errorbox.SetActive(false);
+
+        Panel.gameObject.SetActive(false);
+        frontImageText.gameObject.SetActive(true);
+        sideImageText.gameObject.SetActive(true);
     }
 
-    IEnumerator Error()
+    // Helper method to start the error display/timer
+    private void ShowError(string message)
     {
-        yield return new WaitForSeconds(10);
-        Errorbox.SetActive((false));
+        Debug.LogError(message);
+
+        // Stop any running hide coroutine
+        if (errorCoroutine != null)
+        {
+            StopCoroutine(errorCoroutine);
+        }
+
+        if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
     }
 
     private string CleanPath(string path)
@@ -168,70 +186,67 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // 2. Button wrapper
     public void OnProcessButtonClicked()
     {
-        
-        // Input Validation (Height, Age, Gender)
-        float userHeight;
-        if (!float.TryParse(userHeightInput.text, out userHeight))
-        {
-            Errorbox.SetActive(true);
-            ErrorText.text = "Validation Error: Please enter a valid numerical **HEIGHT** in the Inspector field (e.g., 170.5).";
-            Debug.LogError("Validation Error: Please enter a valid numerical **HEIGHT** in the Inspector field (e.g., 170.5).");
-            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
-            StartCoroutine(Error());
-            return;
-        }
+        Panel.gameObject.SetActive(true);
+        frontImageText.gameObject.SetActive(false);
+        sideImageText.gameObject.SetActive(false);
 
-        float userAge;
-        if (!float.TryParse(userAgeInput.text, out userAge))
-        {
-            Errorbox.SetActive(true);
-            ErrorText.text = "Validation Error: Please enter a valid numerical **AGE** in the Inspector field (e.g., 25).";
-            Debug.LogError("Validation Error: Please enter a valid numerical **AGE** in the Inspector field (e.g., 25).");
-            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
-            StartCoroutine(Error());
-            return;
-        }
-        // Gender Validation 
-        float userGender = 0.0f;
-        if (string.IsNullOrWhiteSpace(userGenderInput.text))
-        {
-            Errorbox.SetActive(true);
-            ErrorText.text = "Validation Error: Please enter a Gender (e.g., Male, Female or Nonbinary).";
-            Debug.LogError("Validation Error: Please enter a Gender (e.g., Male, Female or Nonbinary).");
-            StartCoroutine(Error());
-        }
-        string gender = userGenderInput.text.ToLower().Trim();
-        if (gender == "male")
-        {
-            userGender = 1.0f;
-        }
-        else if (gender == "female")
-        {
-            userGender = 0.1f;
-        }
-        else if (gender == "non-binary" || gender == "nonbinary")
-        {
-            userGender = 2.0f;
-        }
-
+        // Check Image Loaders reference first
         if (frontImageLoader == null || sideImageLoader == null)
         {
-            
-            Debug.LogError("Reference Error: Front or Side Image Loader is not assigned in the Inspector.");
-            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
+            ShowError("Reference Error: Front or Side Image Loader is not assigned in the Inspector.");
             return;
         }
 
         string frontImagePath = frontImageLoader.selectedFilePath;
         string sideImagePath = sideImageLoader.selectedFilePath;
 
+        // Validation 1: Check for selected images
         if (string.IsNullOrEmpty(frontImagePath) || string.IsNullOrEmpty(sideImagePath))
         {
-            Errorbox.SetActive(true);
-            ErrorText.text = "Validation Error: Please select both front and side images first using the UI buttons.";
-            Debug.LogError("Validation Error: Please select both front and side images first using the UI buttons.");
-            StartCoroutine(Error());
-            if (loadingBox != null) loadingBox.SetActive(false); // Turn off loading box on error
+            ShowError("Validation Error: Please select both front and side images first using the UI buttons.");
+            return;
+        }
+
+        // Validation 2: Height
+        float userHeight;
+        if (!float.TryParse(userHeightInput.text, out userHeight))
+        {
+            ShowError("Validation Error: Please enter a valid numerical **HEIGHT** (e.g., 170.5).");
+            return;
+        }
+
+        // Validation 3: Age
+        float userAge;
+        if (!float.TryParse(userAgeInput.text, out userAge))
+        {
+            ShowError("Validation Error: Please enter a valid numerical **AGE** (e.g., 25).");
+            return;
+        }
+
+        // Validation 4: Gender 
+        float userGender = 0.0f;
+        string genderInput = userGenderInput.text.ToLower().Trim();
+        if (string.IsNullOrWhiteSpace(genderInput))
+        {
+            ShowError("Validation Error: Please enter a Gender (e.g., Male, Female, or Nonbinary).");
+            return;
+        }
+
+        if (genderInput == "male")
+        {
+            userGender = 1.0f;
+        }
+        else if (genderInput == "female")
+        {
+            userGender = 0.1f;
+        }
+        else if (genderInput == "non-binary" || genderInput == "nonbinary")
+        {
+            userGender = 2.0f;
+        }
+        else
+        {
+            ShowError($"Validation Error: Invalid Gender input: '{userGenderInput.text}'. Use Male, Female, or Nonbinary.");
             return;
         }
 
@@ -293,7 +308,6 @@ public class PythonMeasurementProcessor : MonoBehaviour
     {
         loadingBox.gameObject.SetActive(true);
 
-        UIscriptAndy.Panel.SetActive(true);
         Debug.Log($"Starting Python processing pipeline for Run ID: {Path.GetFileName(runDataFolderPath)}");
 
         string dataFolderFullPath = Path.GetFullPath(runDataFolderPath);
@@ -320,8 +334,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
         if (string.IsNullOrEmpty(script1JsonOutput))
         {
-            Debug.LogError("Pipeline Error: Script 1 failed to return JSON output. Stopping.");
-            if (loadingBox != null) loadingBox.SetActive(false);
+            ShowError("Pipeline Error: Script 1 failed to return JSON output. Stopping.");
             return;
         }
 
@@ -347,25 +360,139 @@ public class PythonMeasurementProcessor : MonoBehaviour
                 {
                     string errorMessage = data.recommended_size ?? "Unknown error in Python.";
                     string rawErrorData = data.final_measurements_json ?? "No raw data.";
-                    Debug.LogError($"❌ Python Script 2 ({Path.GetFileName(script2Path)}) returnerede fejl (Status=error): {errorMessage}. Rå fejl-data: {rawErrorData}");
-                    if (loadingBox != null) loadingBox.SetActive(false);
+                    ShowError($"❌ Python Script 2 ({Path.GetFileName(script2Path)}) returnerede fejl (Status=error): {errorMessage}. Rå fejl-data: {rawErrorData}");
                     return;
                 }
 
                 Debug.Log($"👍 BEHANDLING FULDFØRT!");
-                Debug.Log($"📝 Python Debug Info: {data.debug_message}");
-                Debug.Log($"📏 Anbefalet størrelse: **{data.recommended_size}**");
-                Debug.Log($"Imputerede mål (JSON String): {data.final_measurements_json}");
 
                 // --- PASS THE NEW IMAGE PATH (using the unique path) ---
                 string frontOverlayPath = Path.GetFullPath(Path.Combine(runDataFolderPath, "front_overlay.png"));
 
+
+                // =========================================================================================
+                // ⭐ START: FINAL PARSING LOGIC FOR TRIPLE OUTPUT
+                // =========================================================================================
+
+                string simpleSize = "N/A";
+                string simpleFitDescription = "No fit information.";
+                string fullDetailedComparison = "No detailed comparison available.";
+
+                if (!string.IsNullOrEmpty(data.recommended_size))
+                {
+                    string fullRecommendedString = data.recommended_size.Trim();
+                    string[] lines = fullRecommendedString.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    string rawFirstLine = lines.Length > 0 ? lines[0].Trim() : "";
+
+                    // --- 1. Extract Recommended Size (Simple Size) ---
+                    if (rawFirstLine.Contains("Recommended:"))
+                    {
+                        string sizeAndSuffix = rawFirstLine.Replace("Recommended:", "").Trim();
+                        int suffixIndex = sizeAndSuffix.IndexOf(" (");
+
+                        if (suffixIndex > 0)
+                        {
+                            // Size found (e.g., "M")
+                            simpleSize = sizeAndSuffix.Substring(0, suffixIndex).Trim();
+                        }
+                        else
+                        {
+                            // Only size found (no tight/loose advice)
+                            simpleSize = sizeAndSuffix;
+                        }
+                    }
+                    else if (fullRecommendedString.StartsWith("ERROR:"))
+                    {
+                        simpleSize = "ERROR";
+                        simpleFitDescription = fullRecommendedString;
+                    }
+
+                    // --- 2. Extract Simple Fit Description (e.g., "Can have bit loose fit") ---
+                    // This is the part inside the parenthesis: (Can have bit loose fit)
+                    int openParenIndex = fullRecommendedString.IndexOf('(');
+                    int closeParenIndex = fullRecommendedString.IndexOf(')');
+
+                    if (openParenIndex != -1 && closeParenIndex != -1 && closeParenIndex > openParenIndex)
+                    {
+                        // Extract the content *including* the parentheses
+                        simpleFitDescription = fullRecommendedString.Substring(openParenIndex, closeParenIndex - openParenIndex + 1).Trim();
+
+                        // Apply custom capitalization for the suffix (e.g., "(Can...")
+                        if (simpleFitDescription.Length > 1 && simpleFitDescription.StartsWith("("))
+                        {
+                            int capIndex = -1;
+                            for (int i = 1; i < simpleFitDescription.Length; i++)
+                            {
+                                if (char.IsLetter(simpleFitDescription[i]))
+                                {
+                                    capIndex = i;
+                                    break;
+                                }
+                            }
+
+                            if (capIndex != -1)
+                            {
+                                char firstChar = simpleFitDescription[capIndex];
+                                if (char.IsLower(firstChar))
+                                {
+                                    simpleFitDescription = simpleFitDescription.Substring(0, capIndex) + char.ToUpper(firstChar) + simpleFitDescription.Substring(capIndex + 1);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        simpleFitDescription = $"Size {simpleSize} is the best fit.";
+                    }
+
+                    // --- 3. Extract Full Detailed Comparison (Pop-up Content) ---
+                    // The detailed comparison starts with 'Compared with the next best size'
+                    int comparisonHeaderIndex = fullRecommendedString.IndexOf("Compared with the next best size", 0, StringComparison.Ordinal);
+
+                    if (comparisonHeaderIndex != -1)
+                    {
+                        // Start extracting from the header (including the header)
+                        fullDetailedComparison = fullRecommendedString.Substring(comparisonHeaderIndex);
+
+                        // Clean up the comparison block: remove the HTML-style underline tags
+                        fullDetailedComparison = fullDetailedComparison.Replace("<u>", "").Replace("</u>", "").Trim();
+                    }
+                    else
+                    {
+                        // If no comparison block is found, use a default message
+                        fullDetailedComparison = "No detailed comparison available.";
+                    }
+                }
+
+                // Append the simple suggestion line from Python (data.simple_additional_info) to the fit description
+                if (!string.IsNullOrEmpty(data.simple_additional_info))
+                {
+                    // Use the simple_additional_info from Python if it exists, to replace the default message
+                    // Format: "(Can have bit loose fit)\nNext best size is M"
+                    simpleFitDescription = $"{simpleFitDescription}\n{data.simple_additional_info}";
+                }
+
+                // FINAL CHECK: If comparison block is missing but we have a simple suggestion, use the simple one
+                if (fullDetailedComparison == "No detailed comparison available." && !string.IsNullOrEmpty(data.simple_additional_info))
+                {
+                    fullDetailedComparison = data.simple_additional_info;
+                }
+
+
+                // =========================================================================================
+                // ⭐ END: FINAL PARSING LOGIC
+                // =========================================================================================
+
                 if (measurementDisplay != null && !string.IsNullOrEmpty(data.final_measurements_json))
                 {
+                    // Pass the three extracted strings to the display component
                     measurementDisplay.DisplayMeasurementsFromPython(
-                        data.final_measurements_json, // Argument 1: The measurement data
-                        data.recommended_size,      // Argument 2: The recommended size/info string
-                        frontOverlayPath            // Argument 3: The path to the overlay image
+                        data.final_measurements_json,         // Argument 1: Measurement JSON
+                        simpleSize,                           // Argument 2: Simple Size (e.g., "M")
+                        frontOverlayPath,                     // Argument 3: Image Path
+                        simpleFitDescription,                 // Argument 4: Fit Suffix + Simple Suggestion
+                        fullDetailedComparison                // Argument 5: Full Pop-up Comparison Text
                     );
                     Debug.Log("Measurements, size, and image path successfully passed to the display component.");
                 }
@@ -395,14 +522,12 @@ public class PythonMeasurementProcessor : MonoBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"JSON Parsing Error: Kunne ikke deserialisere output fra Script 2. Rå output: {finalJsonOutput}. Fejl: {e.Message}");
-                if (loadingBox != null) loadingBox.SetActive(false);
+                ShowError($"JSON Parsing Error: Kunne ikke deserialisere output fra Script 2. Rå output: {finalJsonOutput}. Fejl: {e.Message}");
             }
         }
         else
         {
-            Debug.LogError("Pipeline Error: Script 2 fejlede eller returnerede intet output.");
-            if (loadingBox != null) loadingBox.SetActive(false);
+            ShowError("Pipeline Error: Script 2 fejlede eller returnerede intet output.");
         }
     }
 
@@ -418,13 +543,13 @@ public class PythonMeasurementProcessor : MonoBehaviour
         return Task.Run(() =>
         {
             string arguments = $"-m body_measure.cli " +
-                                  $"--front \"{frontImgPath}\" " +
-                                  $"--side \"{sideImgPath}\" " +
-                                  $"--height-cm {heightCm} " +
-                                  $"--backend deeplabv3 " +
-                                  $"--device cpu " +
-                                  $"--debug-dir \"{cleanedOutputPath}\" " + // Using the unique run path
-                                  $" --save-masks";
+                                $"--front \"{frontImgPath}\" " +
+                                $"--side \"{sideImgPath}\" " +
+                                $"--height-cm {heightCm} " +
+                                $"--backend deeplabv3 " +
+                                $"--device cpu " +
+                                $"--debug-dir \"{cleanedOutputPath}\" " + // Using the unique run path
+                                $" --save-masks";
 
             return ExecutePythonProcess(arguments, "body_measure.cli", pythonRootPath, script1SrcPath);
         });
@@ -514,6 +639,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
                     if (exitCode != 0)
                     {
+                        // Log error, but return outputString as it might contain Python's error JSON
                         Debug.LogError($"❌ Python Script '{scriptIdentifier}' Failed (Code {exitCode}): {errorString}");
                         Debug.LogError($"Executed command: {pythonPath} {arguments}");
                         Debug.LogError($"Working Directory: {workingDirectory}");
