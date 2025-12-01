@@ -20,7 +20,9 @@ public class PythonMeasurementProcessor : MonoBehaviour
     //[Header("User Input via Inspector")]
     public TMP_InputField userHeightInput;
     public TMP_InputField userAgeInput;
-    public TMP_InputField userGenderInput;
+    public string userGenderInput;
+
+    public TMP_Dropdown Genderinput;
 
     [Header("UI Image Loaders")]
     public UIscriptAndy frontImageLoader;
@@ -112,6 +114,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         frontImageText.gameObject.SetActive(true);
         sideImageText.gameObject.SetActive(true);
         greyPanel.gameObject.SetActive(true);
+        Genderinput.options[Genderinput.value].text = userGenderInput;
     }
 
     // Helper method to start the error display/timer
@@ -228,7 +231,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
 
         // Validation 4: Gender 
         float userGender = 0.0f;
-        string genderInput = userGenderInput.text.ToLower().Trim();
+        string genderInput = userGenderInput.ToLower().Trim();
         if (string.IsNullOrWhiteSpace(genderInput))
         {
             ShowError("Please enter a Gender (e.g., Male, Female, or Nonbinary).");
@@ -249,7 +252,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         }
         else
         {
-            ShowError($"Invalid Gender input: '{userGenderInput.text}'. Use Male, Female, or Nonbinary.");
+            ShowError($"Invalid Gender input: '{userGenderInput}'. Use Male, Female, or Nonbinary.");
             return;
         }
 
