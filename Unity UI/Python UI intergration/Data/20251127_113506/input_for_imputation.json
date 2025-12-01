@@ -47,6 +47,7 @@
   "thigh_cm": 64.17569973628346,
   "shoulder_width_cm": 52.629999999999995,
   "inseam_cm": 70.3,
+  "chest_width_cm": 53.294999999999995,
   "qa": {
     "normalization": {
       "target_h_px": 2000,
@@ -57,16 +58,16 @@
       "gender": "male"
     },
     "timing_ms": {
-      "segment": 70082.0,
-      "normalize": 261.8,
-      "precache": 2331.7,
-      "rows": 508.8,
+      "segment": 93993.3,
+      "normalize": 235.0,
+      "precache": 2170.3,
+      "rows": 421.5,
       "scale": 0.0,
-      "widths": 4.8,
-      "ellipse": 0.6,
-      "lengths": 8.6,
-      "debug": 131.9,
-      "total": 73331.4
+      "widths": 4.0,
+      "ellipse": 0.4,
+      "lengths": 7.5,
+      "debug": 83.6,
+      "total": 96916.6
     }
   }
 }
