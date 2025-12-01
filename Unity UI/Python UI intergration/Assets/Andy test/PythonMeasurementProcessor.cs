@@ -20,6 +20,8 @@ public class PythonMeasurementProcessor : MonoBehaviour
     //[Header("User Input via Inspector")]
     public TMP_InputField userHeightInput;
     public TMP_InputField userAgeInput;
+    // NOTE: userGenderInput string is now only used to initialize the dropdown caption, 
+    // but the actual input is read directly from the dropdown object.
     public string userGenderInput = "Select Gender";
 
     public TMP_Dropdown Genderinput;
@@ -114,6 +116,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         frontImageText.gameObject.SetActive(true);
         sideImageText.gameObject.SetActive(true);
         greyPanel.gameObject.SetActive(true);
+        // Ensure the dropdown caption reflects the default value at startup
         Genderinput.captionText.text = userGenderInput;
     }
 
@@ -229,12 +232,22 @@ public class PythonMeasurementProcessor : MonoBehaviour
             return;
         }
 
-        // Validation 4: Gender 
+        // --- Validation 4: Gender (FIXED to read from Dropdown) ---
         float userGender = 0.0f;
-        string genderInput = userGenderInput.ToLower().Trim();
-        if (string.IsNullOrWhiteSpace(genderInput))
+
+        if (Genderinput == null)
         {
-            ShowError("Please enter a Gender (e.g., Male, Female, or Nonbinary).");
+            ShowError("Gender Dropdown (Genderinput) is not assigned in the Inspector.");
+            return;
+        }
+
+        // Get the text of the currently selected option using captionText
+        string genderInputText = Genderinput.captionText.text;
+        string genderInput = genderInputText.ToLower().Trim();
+
+        if (string.IsNullOrWhiteSpace(genderInput) || genderInput == "select gender")
+        {
+            ShowError("Please select a valid **GENDER** from the dropdown.");
             return;
         }
 
@@ -252,9 +265,10 @@ public class PythonMeasurementProcessor : MonoBehaviour
         }
         else
         {
-            ShowError($"Invalid Gender input: '{userGenderInput}'. Use Male, Female, or Nonbinary.");
+            ShowError($"Invalid Gender input detected: '{genderInputText}'. Dropdown value must be 'Male', 'Female', or 'Nonbinary'.");
             return;
         }
+        // -----------------------------------------------------------
 
         // --- UPDATED: Generate Unique Run Folder Path ---
         // Get the next available participant folder path
@@ -494,11 +508,11 @@ public class PythonMeasurementProcessor : MonoBehaviour
                 {
                     // Pass the three extracted strings to the display component
                     measurementDisplay.DisplayMeasurementsFromPython(
-                        data.final_measurements_json,         // Argument 1: Measurement JSON
-                        simpleSize,                           // Argument 2: Simple Size (e.g., "M")
-                        frontOverlayPath,                     // Argument 3: Image Path
-                        simpleFitDescription,                 // Argument 4: Fit Suffix + Simple Suggestion
-                        fullDetailedComparison                // Argument 5: Full Pop-up Comparison Text
+                        data.final_measurements_json,        // Argument 1: Measurement JSON
+                        simpleSize,                            // Argument 2: Simple Size (e.g., "M")
+                        frontOverlayPath,                    // Argument 3: Image Path
+                        simpleFitDescription,                // Argument 4: Fit Suffix + Simple Suggestion
+                        fullDetailedComparison               // Argument 5: Full Pop-up Comparison Text
                     );
                     Debug.Log("Measurements, size, and image path successfully passed to the display component.");
                 }

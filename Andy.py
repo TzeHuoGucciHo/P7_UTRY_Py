@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 import traceback
-import time  # <-- NEW: Added for timing
+import time
 from typing import Dict, Any, Union, Tuple
 
 # Configuration
@@ -275,11 +275,12 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
     comparison_details = []
 
     if comparison_size is not None:
+        # Get the row for the size being compared against
         comparison_row = size_chart[size_chart['SIZE'] == comparison_size].iloc[0]
 
         for user_feature, chart_column in CHART_COL_MAP.items():
-            user_val = measurements.get(user_feature)
-            chart_val_next = comparison_row[chart_column]
+            user_val = measurements.get(user_feature) # User's imputed value (e.g., 49.305)
+            chart_val_next = comparison_row[chart_column] # The chart value for the comparison size (e.g., 45.00)
 
             # Define the simplified display name for the comparison output
             display_map_for_comparison = {
@@ -293,14 +294,20 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
             # Calculate the difference: User - Chart (Comparison Size)
             diff_cm = user_val - chart_val_next
 
-            # Determine the symbol based on the difference:
-            comparison_symbol = ">" if diff_cm >= 0 else "<"
+            # Determine the comparison text based on the difference:
+            if diff_cm >= 0:
+                comparison_text = "larger than"
+            else:
+                comparison_text = "smaller than"
 
             # Use absolute value for the distance, formatted to two decimal places
             abs_diff = abs(diff_cm)
 
+            # Format the output line to show the user's measurement
             comparison_details.append(
-                f"{display_name}: {comparison_symbol} {abs_diff:.2f} cm from {comparison_size}")
+                f"{display_name} = {user_val:.2f} cm:\n"
+                f"{abs_diff:.2f} cm {comparison_text} for {comparison_size}"
+            )
 
         # Final formatting
         if comparison_details:
