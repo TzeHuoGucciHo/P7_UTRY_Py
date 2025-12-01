@@ -26,7 +26,6 @@ data = {
     "TotalHeight": [190.0]
 }
 
-# In CM
 true_val = {
     "Gender": 1.0,
     "Age": 23.0,
@@ -68,6 +67,17 @@ imputed_original_scale_df = pd.DataFrame(
 final_result_df = input_df.copy()
 for col in numeric_cols_no_gender:
     final_result_df.loc[mask_original[col], col] = imputed_original_scale_df[col]
+
+
+if input_df['Age'][0] > 18 and input_df['TotalHeight'][0] > 180:
+    waist_est = input_df['TotalHeight'][0] * 0.54
+    hips_est = input_df['TotalHeight'][0] * 0.60
+    if abs(final_result_df['Waist'][0] - waist_est) > 10:
+        final_result_df['Waist'][0] = waist_est
+    if abs(final_result_df['Hips'][0] - hips_est) > 10:
+        final_result_df['Hips'][0] = hips_est
+
+
 
 print("--- Input Data with Missing Values (Converted to CM) ---")
 print(input_df.to_string())
