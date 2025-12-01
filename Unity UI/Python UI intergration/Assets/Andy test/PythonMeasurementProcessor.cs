@@ -20,7 +20,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
     //[Header("User Input via Inspector")]
     public TMP_InputField userHeightInput;
     public TMP_InputField userAgeInput;
-    public string userGenderInput;
+    public string userGenderInput = "Select Gender";
 
     public TMP_Dropdown Genderinput;
 
@@ -114,7 +114,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         frontImageText.gameObject.SetActive(true);
         sideImageText.gameObject.SetActive(true);
         greyPanel.gameObject.SetActive(true);
-        Genderinput.options[Genderinput.value].text = userGenderInput;
+        Genderinput.captionText.text = userGenderInput;
     }
 
     // Helper method to start the error display/timer

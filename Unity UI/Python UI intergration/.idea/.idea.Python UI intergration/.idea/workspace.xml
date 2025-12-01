@@ -4,8 +4,7 @@
     <list default="true" id="ef5b06a4-8092-4040-a716-3ea78173799e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Python UI intergration/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Python UI intergration/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Andy test/PythonMeasurementProcessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Andy test/PythonMeasurementProcessor.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/ShaderGraphSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ShaderGraphSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/UtryMain 1.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/UtryMain 1.unity" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,7 +95,7 @@
       <workItem from="1764147591649" duration="2518000" />
       <workItem from="1764162159398" duration="652000" />
       <workItem from="1764325261042" duration="7170000" />
-      <workItem from="1764594980998" duration="814000" />
+      <workItem from="1764594980998" duration="2269000" />
     </task>
     <servers />
   </component>

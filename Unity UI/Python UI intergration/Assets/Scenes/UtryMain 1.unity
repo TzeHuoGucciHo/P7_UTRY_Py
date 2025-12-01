@@ -875,7 +875,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Male
+  m_text: Select Gender
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3228,8 +3228,8 @@ MonoBehaviour:
   UIscriptAndy: {fileID: 1027756236}
   userHeightInput: {fileID: 1743493779}
   userAgeInput: {fileID: 727268417}
-  userGenderInput: 
-  Genderinput: {fileID: 0}
+  userGenderInput: Select Gender
+  Genderinput: {fileID: 904316014}
   frontImageLoader: {fileID: 1027756236}
   sideImageLoader: {fileID: 2080291146}
   measurementDisplay: {fileID: 867378710}
@@ -3348,7 +3348,7 @@ RectTransform:
   m_GameObject: {fileID: 904316012}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.0324, y: 2.0324, z: 2.0324}
+  m_LocalScale: {x: 1.9917519, y: 2.0324, z: 2.0324}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 254072380}
@@ -3358,7 +3358,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 511, y: -243}
+  m_AnchoredPosition: {x: 511, y: -226}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &904316014
@@ -3412,6 +3412,9 @@ MonoBehaviour:
   m_MultiSelect: 0
   m_Options:
     m_Options:
+    - m_Text: Select Gender
+      m_Image: {fileID: 0}
+      m_Color: {r: 1, g: 1, b: 1, a: 1}
     - m_Text: Male
       m_Image: {fileID: 0}
       m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8356,7 +8359,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6550850696613518875, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6743159919951341623, guid: 5f999b86adef0c34eac2f0ad8d6a3aa1, type: 3}
       propertyPath: m_Type
