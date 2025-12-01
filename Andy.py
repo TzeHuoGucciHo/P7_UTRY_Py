@@ -281,8 +281,14 @@ def get_recommended_size(measurements: Dict[str, float], size_chart: pd.DataFram
             user_val = measurements.get(user_feature)
             chart_val_next = comparison_row[chart_column]
 
-            # Use the feature name directly for the final output as requested
-            display_name = user_feature
+            # Define the simplified display name for the comparison output
+            display_map_for_comparison = {
+                'ChestFrontWidth': 'Chest Width',
+                'ShoulderToWaist': 'Torso Length',
+                'ArmLength': 'Sleeve Length'
+            }
+            # Use the simplified name for the final output
+            display_name = display_map_for_comparison.get(user_feature, user_feature)
 
             # Calculate the difference: User - Chart (Comparison Size)
             diff_cm = user_val - chart_val_next

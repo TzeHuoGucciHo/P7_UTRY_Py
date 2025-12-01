@@ -60,6 +60,8 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // Private variable for Coroutine management
     private Coroutine errorCoroutine;
 
+    public GameObject greyPanel;
+
     // Data Structures
     [System.Serializable]
     public class MeasurementData
@@ -109,6 +111,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         Panel.gameObject.SetActive(false);
         frontImageText.gameObject.SetActive(true);
         sideImageText.gameObject.SetActive(true);
+        greyPanel.gameObject.SetActive(true);
     }
 
     // Helper method to start the error display/timer
@@ -193,7 +196,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         // Check Image Loaders reference first
         if (frontImageLoader == null || sideImageLoader == null)
         {
-            ShowError("Reference Error: Front or Side Image Loader is not assigned in the Inspector.");
+            ShowError("Front or Side Image Loader is not assigned in the Inspector.");
             return;
         }
 
@@ -203,7 +206,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         // Validation 1: Check for selected images
         if (string.IsNullOrEmpty(frontImagePath) || string.IsNullOrEmpty(sideImagePath))
         {
-            ShowError("Validation Error: Please select both front and side images first using the UI buttons.");
+            ShowError("Please select both front and side images first using the UI buttons.");
             return;
         }
 
@@ -211,7 +214,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         float userHeight;
         if (!float.TryParse(userHeightInput.text, out userHeight))
         {
-            ShowError("Validation Error: Please enter a valid numerical **HEIGHT** (e.g., 170.5).");
+            ShowError("Please enter a valid numerical **HEIGHT** (e.g., 170.5).");
             return;
         }
 
@@ -219,7 +222,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         float userAge;
         if (!float.TryParse(userAgeInput.text, out userAge))
         {
-            ShowError("Validation Error: Please enter a valid numerical **AGE** (e.g., 25).");
+            ShowError("Please enter a valid numerical **AGE** (e.g., 25).");
             return;
         }
 
@@ -228,7 +231,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         string genderInput = userGenderInput.text.ToLower().Trim();
         if (string.IsNullOrWhiteSpace(genderInput))
         {
-            ShowError("Validation Error: Please enter a Gender (e.g., Male, Female, or Nonbinary).");
+            ShowError("Please enter a Gender (e.g., Male, Female, or Nonbinary).");
             return;
         }
 
@@ -246,7 +249,7 @@ public class PythonMeasurementProcessor : MonoBehaviour
         }
         else
         {
-            ShowError($"Validation Error: Invalid Gender input: '{userGenderInput.text}'. Use Male, Female, or Nonbinary.");
+            ShowError($"Invalid Gender input: '{userGenderInput.text}'. Use Male, Female, or Nonbinary.");
             return;
         }
 
@@ -508,6 +511,9 @@ public class PythonMeasurementProcessor : MonoBehaviour
                 // --- turn loading box OFF here (right after UI updates) ---
                 if (loadingBox != null)
                     loadingBox.SetActive(false);
+
+                if (greyPanel != null)
+                    greyPanel.SetActive(false);
 
                 // --- KØRSELSTID STATISTIK ---
                 Debug.Log("--- TOTAL KØRSELSTID STATISTIK ---");
