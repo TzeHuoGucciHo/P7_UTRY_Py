@@ -1,0 +1,15 @@
+{
+    "status": "success",
+    "debug_message": "Inputs Found: ShoulderWidth(shoulder_width_cm), ChestCircumference(chest_cm), ChestFrontWidth(chest_width_cm), Waist(waist_cm), Hips(hip_cm), LegLength(inseam_cm), TotalHeight(UnityArg: 1875.0), Age(UnityArg: 24.0), Gender(UnityArg: Male). Used Static Values for: Age, ShoulderWidth, ChestWidth, ChestFrontWidth, Waist, Hips, TotalHeight, Gender. ",
+    "recommended_size": "ERROR: No size fits. (WARNING: Extreme tight fit - Your measurements are too large. Clothing is likely too small. Measured against largest size 'XXL': ChestFrontWidth (577.5cm vs. 48.0cm chart + 13.50cm tolerance) & ShoulderToWaist (640.7cm vs. 67.0cm chart + 13.66cm tolerance) & ArmLength (130.6cm vs. 62.0cm chart + 13.66cm tolerance).)",
+    "simple_additional_info": "WARNING: No standard size fits. Your measurements are too large.",
+    "scaled_measurements_json": "{\"Age\": 0.9883738671251904, \"HeadCircumference\": 8.782220150873371, \"ShoulderWidth\": 35.70987467150055, \"ChestWidth\": 4.468347154067071, \"Belly\": 10.730636718305995, \"Waist\": 6.915253691386643, \"Hips\": 4.8634113031969815, \"ArmLength\": 6.742152269132798, \"ShoulderToWaist\": 12.008470059281146, \"WaistToKnee\": 14.735083880245504, \"LegLength\": 10.595013987053605, \"TotalHeight\": 32.5462554566479}",
+    "final_measurements_json": "{\"Gender\": 1.0, \"Age\": 24.0, \"HeadCircumference\": 101.18770234769609, \"ShoulderWidth\": 563.4375, \"ChestCircumference\": 1403.5052597072636, \"ChestFrontWidth\": 577.5, \"Belly\": 407.4338600097197, \"Waist\": 1119.8410751640406, \"Hips\": 1246.4553504976186, \"ArmLength\": 130.64211629115587, \"ShoulderToWaist\": 640.6737621284022, \"WaistToKnee\": 519.3594428469653, \"LegLength\": 666.5625000000005, \"TotalHeight\": 1875.0}",
+    "runtime_ms": {
+        "step_1_setup_ms": 1503.9536952972412,
+        "step_2_impute_ms": 7.634162902832031,
+        "step_3_sizing_ms": 2.0034313201904297,
+        "step_4_export_ms": 0.0,
+        "total_runtime_ms": 1516.1046981811523
+    }
+}

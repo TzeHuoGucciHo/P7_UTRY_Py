@@ -1,0 +1,15 @@
+{
+    "status": "success",
+    "debug_message": "Inputs Found: ShoulderWidth(shoulder_width_cm), ChestCircumference(chest_cm), ChestFrontWidth(chest_width_cm), Waist(waist_cm), Hips(hip_cm), LegLength(inseam_cm), TotalHeight(UnityArg: 189.0), Age(UnityArg: 24.0), Gender(UnityArg: Male). Used Static Values for: Age, ShoulderWidth, ChestWidth, ChestFrontWidth, Waist, Hips, TotalHeight, Gender. ",
+    "recommended_size": "Recommended: S\n\n\n<u>Compared with the next best size M:</u>\n\nChest Width = 22.77 cm:\n22.23 cm smaller than for M\n\nTorso Length = 17.60 cm:\n46.40 cm smaller than for M\n\nSleeve Length = 13.92 cm:\n45.08 cm smaller than for M",
+    "simple_additional_info": "Size S is the best fit.",
+    "scaled_measurements_json": "{\"Age\": 0.9883738671251904, \"HeadCircumference\": -4.627262025790742, \"ShoulderWidth\": 2.5713183140774154, \"ChestWidth\": -51.33666670583536, \"Belly\": -4.7446589705803515, \"Waist\": 1.0170237965786462, \"Hips\": 1.4873260669649997, \"ArmLength\": -2.8593936579820376, \"ShoulderToWaist\": -2.7089746884256196, \"WaistToKnee\": -5.055758901792501, \"LegLength\": -8.210110039929662, \"TotalHeight\": 2.094433364059266}",
+    "final_measurements_json": "{\"Gender\": 1.0, \"Age\": 24.0, \"HeadCircumference\": -327.0411075126928, \"ShoulderWidth\": 63.0315, \"ChestCircumference\": 0.0, \"ChestFrontWidth\": 22.7745, \"Belly\": 0.4856624882321887, \"Waist\": 68.40632716459466, \"Hips\": 83.90582106794645, \"ArmLength\": 13.92353118953477, \"ShoulderToWaist\": 17.600375980193135, \"WaistToKnee\": 2.6575928695049753, \"LegLength\": 0.9449999999999985, \"TotalHeight\": 189.0}",
+    "runtime_ms": {
+        "step_1_setup_ms": 1456.0227394104004,
+        "step_2_impute_ms": 6.591558456420898,
+        "step_3_sizing_ms": 1.699209213256836,
+        "step_4_export_ms": 0.0,
+        "total_runtime_ms": 1466.3352966308594
+    }
+}
