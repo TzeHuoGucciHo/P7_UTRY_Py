@@ -3095,13 +3095,13 @@ MonoBehaviour:
   frontImageLoader: {fileID: 1027756236}
   sideImageLoader: {fileID: 2080291146}
   measurementDisplay: {fileID: 867378710}
-  pythonPath: C:/Users/andre/miniconda3/envs/py312/python.exe
-  script1RootPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation
-  script1SrcPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src
-  script1Path: C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src\body_measure\cli.py
-  script2Path: C:/Uni/MED7/Semester project/P7_UTRY_Py/Andy.py
-  sizeChartCsvPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\size_chart.csv
-  baseDataFolderPath: C:\Uni\MED7\Semester project\P7_UTRY_Py\Data
+  pythonPath: C:\Users\lukas\anaconda3\envs\ML312\python.exe
+  script1RootPath: C:\Users\lukas\Documents\Github\P7_UTRY_Py\Measurements_Calculation
+  script1SrcPath: C:\Users\lukas\Documents\Github\P7_UTRY_Py\Measurements_Calculation\body_measure\src
+  script1Path: C:\Users\lukas\Documents\Github\P7_UTRY_Py\Measurements_Calculation\body_measure\src\body_measure\cli.py
+  script2Path: C:\Users\lukas\Documents\Github\P7_UTRY_Py/Andy.py
+  sizeChartCsvPath: C:\Users\lukas\Documents\Github\P7_UTRY_Py\size_chart.csv
+  baseDataFolderPath: C:\Users\lukas\Documents\Github\P7_UTRY_Py\Data
   Panel: {fileID: 312803436}
   frontImageText: {fileID: 1527138068}
   sideImageText: {fileID: 1461033990}

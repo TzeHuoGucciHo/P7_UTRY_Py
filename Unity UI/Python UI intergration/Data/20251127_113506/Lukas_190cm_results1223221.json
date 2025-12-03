@@ -1,0 +1,72 @@
+{
+  "pixels_per_cm": 10.526315789473685,
+  "backend_front": "deeplabv3",
+  "backend_side": "deeplabv3",
+  "rows_px": {
+    "shoulder": 448,
+    "hip": 1008,
+    "crotch": 1270,
+    "waist": 794,
+    "chest": 573,
+    "thigh": 1470
+  },
+  "widths_px_front": {
+    "chest": 288,
+    "waist": 217,
+    "hip": 253,
+    "shoulder": 250,
+    "thigh": 127
+  },
+  "widths_px_side": {
+    "chest": 516,
+    "waist": 470,
+    "hip": 318,
+    "thigh": 290
+  },
+  "semiaxes_cm": {
+    "chest": [
+      13.68,
+      24.509999999999998
+    ],
+    "waist": [
+      10.3075,
+      22.325
+    ],
+    "hip": [
+      12.017499999999998,
+      15.104999999999999
+    ],
+    "thigh": [
+      6.0325,
+      13.774999999999999
+    ]
+  },
+  "chest_cm": 122.40178070384816,
+  "waist_cm": 106.02389966098323,
+  "hip_cm": 85.48411199767489,
+  "thigh_cm": 64.62720382248145,
+  "shoulder_width_cm": 23.75,
+  "inseam_cm": 73.14999999999999,
+  "qa": {
+    "normalization": {
+      "target_h_px": 2000,
+      "crop_margin_ratio": 0.02,
+      "ppc_used_px_per_cm": 10.526315789473685,
+      "ppc_source": "height",
+      "rows_source": "pose+mask_fast",
+      "gender": "male"
+    },
+    "timing_ms": {
+      "segment": 7744.0,
+      "normalize": 234.4,
+      "precache": 2595.6,
+      "rows": 462.7,
+      "scale": 0.0,
+      "widths": 4.9,
+      "ellipse": 0.0,
+      "lengths": 6.8,
+      "debug": 155.7,
+      "total": 11204.2
+    }
+  }
+}

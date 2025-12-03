@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -37,25 +37,25 @@ public class PythonMeasurementProcessor : MonoBehaviour
     // ----------------------------------------------------------------------
 
     [Header("Python Configuration")]
-    public string pythonPath = @"C:\Users\andre\miniconda3\envs\py312\python.exe";
+    public string pythonPath = @"C:\Users\lukas\anaconda3\python.exe";
 
     // 1. PROJECT ROOT
-    public string script1RootPath = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation";
+    public string script1RootPath = @"C:\Users\lukas\Documents\Github\P7_UTRY_Py\Measurements_Calculation";
 
     // 2. PYTHON SEARCH PATH
-    public string script1SrcPath = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src";
+    public string script1SrcPath = @"C:\Users\lukas\Documents\Github\P7_UTRY_Py\Measurements_Calculation\body_measure\src";
 
     // 3. SCRIPT PATH (Not directly used in RunScript1Async, but kept for context)
-    public string script1Path = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Measurements_Calculation\body_measure\src\body_measure\cli.py";
+    public string script1Path = @"C:\Users\lukas\Documents\Github\P7_UTRY_Py\Measurements_Calculation\src\body_measure\cli.py";
 
 
     [Header("Script 2 Files")]
-    public string script2Path = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\Andy.py";
+    public string script2Path = @"C:\Users\lukas\Documents\Github\P7_UTRY_Py\Andy.py";
 
-    public string sizeChartCsvPath = @"C:\Uni\MED7\Semester project\P7_UTRY_Py\size_chart.csv";
+    public string sizeChartCsvPath = @"C:\Users\lukas\Documents\Github\P7_UTRY_Py\size_chart.csv";
 
     // BASE DATA FOLDER: The unique run folders will be created inside this path.
-    public string baseDataFolderPath = "C:\\Uni\\MED7\\Semester project\\P7_UTRY_Py\\Data";
+    public string baseDataFolderPath = @"C:\Users\lukas\Documents\Github\P7_UTRY_Py\Data";
 
     public GameObject Panel;
     public GameObject frontImageText;

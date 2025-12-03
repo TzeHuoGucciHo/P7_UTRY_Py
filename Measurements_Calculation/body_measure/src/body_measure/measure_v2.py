@@ -474,6 +474,8 @@ def compute(
         "hip_cm": circumf_cm["hip"],
         "thigh_cm": circumf_cm["thigh"],
         "shoulder_width_cm": shoulder_width_cm,
+        "chest_width_cm":    chest_width_cm,  # ny
+        "ChestWidth":        chest_width_cm,  # ny (camelCase til JSON)
         "inseam_cm": inseam_cm,
 
         # --- NEW/MODIFIED KEYS ---
