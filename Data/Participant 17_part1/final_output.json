@@ -1,0 +1,15 @@
+{
+    "status": "success",
+    "debug_message": "Inputs Found: ShoulderWidth(shoulder_width_cm), ChestCircumference(chest_cm), ChestFrontWidth(chest_width_cm), Waist(waist_cm), Hips(hip_cm), LegLength(inseam_cm), TotalHeight(UnityArg: 1825.0), Age(UnityArg: 24.0), Gender(UnityArg: Male). Used Static Values for: Age, ShoulderWidth, ChestWidth, ChestFrontWidth, Waist, Hips, TotalHeight, Gender. ",
+    "recommended_size": "ERROR: No size fits. (WARNING: Extreme tight fit - Your measurements are too large. Clothing is likely too small. Measured against largest size 'XXL': ChestFrontWidth (469.0cm vs. 48.0cm chart + 13.50cm tolerance) & ShoulderToWaist (532.1cm vs. 67.0cm chart + 13.66cm tolerance) & ArmLength (128.4cm vs. 62.0cm chart + 13.66cm tolerance).)",
+    "simple_additional_info": "WARNING: No standard size fits. Your measurements are too large.",
+    "scaled_measurements_json": "{\"Age\": 0.9883738671251904, \"HeadCircumference\": 8.491076975773481, \"ShoulderWidth\": 31.812667486801722, \"ChestWidth\": 4.412356785423767, \"Belly\": 10.79277332726138, \"Waist\": 6.6062653963014535, \"Hips\": 4.771255455730657, \"ArmLength\": 6.56477949118164, \"ShoulderToWaist\": 10.947897302184877, \"WaistToKnee\": 13.869503368303404, \"LegLength\": 10.341290178333754, \"TotalHeight\": 31.83950629839594}",
+    "final_measurements_json": "{\"Gender\": 1.0, \"Age\": 24.0, \"HeadCircumference\": 99.83950969630173, \"ShoulderWidth\": 495.4875, \"ChestCircumference\": 1147.6169572412957, \"ChestFrontWidth\": 469.02500000000003, \"Belly\": 410.48343050552546, \"Waist\": 953.3609658443024, \"Hips\": 1101.3365850775344, \"ArmLength\": 128.40380396567062, \"ShoulderToWaist\": 532.0794781678524, \"WaistToKnee\": 472.7607989628587, \"LegLength\": 638.7500000000007, \"TotalHeight\": 1825.0}",
+    "runtime_ms": {
+        "step_1_setup_ms": 1257.889986038208,
+        "step_2_impute_ms": 4.982233047485352,
+        "step_3_sizing_ms": 1.0175704956054688,
+        "step_4_export_ms": 0.0,
+        "total_runtime_ms": 1265.4132843017578
+    }
+}
