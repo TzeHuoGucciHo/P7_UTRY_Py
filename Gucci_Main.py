@@ -377,17 +377,18 @@ def main():
     # ---------------------------
     # Data Overview & Cleaning
     # ---------------------------
-    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-    num_cols_no_gender = [c for c in num_cols if c != 'Gender']
-    cat_cols = ['Gender']
-
-    df = convert_inches_to_cm(df, num_cols_no_gender)
-
-    data_overview(df, num_cols, cat_cols, title="Full Dataset")
-
     df = df.drop_duplicates()
 
+    all_num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    df = convert_inches_to_cm(df, all_num_cols)
+
     train_df, val_df, test_df = split_dataset(df)
+
+    num_cols = train_df.select_dtypes(include=[np.number]).columns.tolist()
+    num_cols_no_gender = [col for col in num_cols if col not in ['Gender']]
+    cat_cols = ['Gender']
+
+    data_overview(df, num_cols, cat_cols, title="Full Dataset")
 
     print("\nTrain Missing values:\n", train_df.isnull().sum())
     print("\nVal Missing values:\n", val_df.isnull().sum())
