@@ -54,8 +54,7 @@ def split_dataset(df, train_frac=0.7, val_frac=0.15, test_frac=0.15, random_stat
 def data_overview(df, numeric_cols, cat_cols, title=""):
     print(f"\n===== {title.upper()} =====\n")
 
-    print("Shape:", df.shape)
-    print("\nColumn types:\n", df.dtypes)
+    print("\nInfo:", df.info())
 
     print("\nMissing values per column:\n", df.isnull().sum())
     print("\nNumber of duplicates:", df.duplicated().sum())
@@ -378,18 +377,17 @@ def main():
     # ---------------------------
     # Data Overview & Cleaning
     # ---------------------------
-    df = df.drop_duplicates()
-
-    all_num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-    df = convert_inches_to_cm(df, all_num_cols)
-
-    train_df, val_df, test_df = split_dataset(df)
-
-    num_cols = train_df.select_dtypes(include=[np.number]).columns.tolist()
-    num_cols_no_gender = [col for col in num_cols if col not in ['Gender']]
+    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    num_cols_no_gender = [c for c in num_cols if c != 'Gender']
     cat_cols = ['Gender']
 
+    df = convert_inches_to_cm(df, num_cols_no_gender)
+
     data_overview(df, num_cols, cat_cols, title="Full Dataset")
+
+    df = df.drop_duplicates()
+
+    train_df, val_df, test_df = split_dataset(df)
 
     print("\nTrain Missing values:\n", train_df.isnull().sum())
     print("\nVal Missing values:\n", val_df.isnull().sum())
